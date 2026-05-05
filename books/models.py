@@ -11,7 +11,7 @@ class Book(models.Model):
     title= models.CharField(max_length=52)
     author=models.CharField(max_length=50)
     published_date= models.DateField()
-    isbn= models.CharField(max_length=13, unique=True)
+    isbn= models.CharField(max_length=13, unique=True, null=True, blank=True)
 
     category= models.ForeignKey(
         Category,
