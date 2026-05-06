@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'books',
+    'django_rest_passwordreset',
+    'books.apps.BooksConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -99,19 +101,26 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+from datetime import timedelta
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#     ],
+ }
+DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 
-LANGUAGE_CODE = 'en-us'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
+EMAIL_HOST_USER = 'grgpurnima27@gmail.com'
+EMAIL_HOST_PASSWORD = 'wpzq inym wvmj izxg'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
