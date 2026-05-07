@@ -1,5 +1,15 @@
 from rest_framework import serializers
 from .models import Book, Category
+from django.contrib.auth.models import User
+
+
+class RegisterSerializer(serializers.Serializer):
+    username= serializers.CharField(required= True)
+    password= serializers.CharField(required=True, write_only=True)
+    email= serializers.EmailField(required=False)
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField(required=True)
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,3 +22,4 @@ class BookSerializer(serializers.ModelSerializer):
         fields= [
             'id','title','author','published_date','isbn','category','category_name'
         ]
+

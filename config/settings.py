@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure--5vo$f(v81sub0f5#bv*i_vg$7nnwv%y9_k*b00(w+sb!@_)tk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.18.218','localhost','127.0.0.1']
 
 
 # Application definition
@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_rest_passwordreset',
     'books.apps.BooksConfig',
+    'drf_yasg',
+    'rest_framework_simplejwt.token_blacklist'
     
 ]
 
@@ -58,7 +60,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -104,15 +106,24 @@ AUTH_PASSWORD_VALIDATORS = [
 from datetime import timedelta
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated',
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
 #     ],
- }
+# #     'DEFAULT_PERMISSION_CLASSES': [
+# #         'rest_framework.permissions.IsAuthenticated',
+# #     ],
+#  }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
+PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -124,5 +135,14 @@ EMAIL_HOST_PASSWORD = 'wpzq inym wvmj izxg'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        }
+    }
+}
 
 STATIC_URL = 'static/'
