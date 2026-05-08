@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure--5vo$f(v81sub0f5#bv*i_vg$7nnwv%y9_k*b00(w+sb!@_)tk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.18.218','localhost','127.0.0.1']
+ALLOWED_HOSTS = ['*']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Application definition
@@ -41,11 +42,13 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
     'books.apps.BooksConfig',
     'drf_yasg',
-    'rest_framework_simplejwt.token_blacklist'
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
     
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -145,4 +148,5 @@ SWAGGER_SETTINGS = {
     }
 }
 
+CORS_ALLOW_ALL_ORIGINS = True
 STATIC_URL = 'static/'
