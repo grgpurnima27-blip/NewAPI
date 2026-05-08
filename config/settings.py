@@ -161,10 +161,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 Django settings for config project.
 """
-
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 import dj_database_url
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -172,7 +173,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
+# ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', '192.168.18.219']
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -277,11 +279,13 @@ SWAGGER_SETTINGS = {
             'name': 'Authorization',
             'in': 'header',
         }
-    }
+    },
+    'USE_SESSION_AUTH': False,
 }
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
+LOGIN_URL = '/admin/login/'
 
 # Static files
 STATIC_URL = 'static/'

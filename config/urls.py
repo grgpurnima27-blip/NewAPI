@@ -69,7 +69,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from books.views import register_view, logout_view
-
+from books.views import verify_email
 schema_view = get_schema_view(
     openapi.Info(
         title="Book API",
@@ -91,4 +91,6 @@ urlpatterns = [
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
+    path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
+
 ]
