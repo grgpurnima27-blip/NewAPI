@@ -7,32 +7,40 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.pagination import PageNumberPagination  # ← added
 
-from drf_yasg.utils import swagger_auto_schema  
+from drf_yasg.utils import swagger_auto_schema
 
 from .models import Book, Category
 from .serializers import *
 from .serializers import RegisterSerializer, LogoutSerializer
 
 
+# PAGINATION
 
-#  BOOK API (PROTECTED)
+class BookPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 5
+
+
+#  BOOK API
 
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all().order_by('-created_at')  # newest first
+    queryset = Book.objects.all().order_by('-created_at')
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = BookPagination  # ← added
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 # EMAIL VERIFICATION
@@ -43,7 +51,6 @@ def verify_email(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = User.objects.get(pk=uid)
-
     except:
         return Response({'error': 'Invalid verification link'}, status=400)
 
@@ -53,7 +60,6 @@ def verify_email(request, uidb64, token):
         return Response({'message': 'Email verified successfully! You can now login.'})
 
     return Response({'error': 'Invalid or expired token'}, status=400)
-
 
 
 #  REGISTER USER
@@ -77,7 +83,6 @@ def register_view(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    #  USER CREATED AS INACTIVE
     user = User.objects.create_user(
         username=username,
         password=password,
@@ -86,13 +91,12 @@ def register_view(request):
     user.is_active = False
     user.save()
 
-    #  Generate verification link
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
-    verify_link = f"http://127.0.0.1:8000/api/verify-email/{uid}/{token}/"
+    BASE_URL = getattr(settings, 'BASE_URL', 'http://127.0.0.1:8000')
+    verify_link = f"{BASE_URL}/api/verify-email/{uid}/{token}/"
 
-    #  Send email
     send_mail(
         subject="Verify your email",
         message=f"Click to verify your account: {verify_link}",
@@ -104,7 +108,6 @@ def register_view(request):
     return Response({
         'message': 'Account created successfully! Check your email to verify.'
     }, status=status.HTTP_201_CREATED)
-
 
 
 #  LOGOUT

@@ -256,6 +256,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',  # keeps your API protected
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
+
 }
 
 SWAGGER_SETTINGS = {
@@ -308,6 +311,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
 LOGIN_URL = '/admin/login/'
+BASE_URL = 'https://newapi-jgbv.onrender.com'
 
 # Static files
 STATIC_URL = 'static/'
