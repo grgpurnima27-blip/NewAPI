@@ -121,13 +121,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-
-from books.views import register_view, logout_view, verify_email  # ✅ FIXED IMPORT
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-
+from books.views import verify_email, reset_password_page
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -140,67 +134,24 @@ schema_view = get_schema_view(
     authentication_classes=[],
 )
 
-
-@csrf_exempt
-def create_superuser(request):
-    if request.method == 'POST':
-        from django.contrib.auth.models import User
-        data = json.loads(request.body)
-
-        if not User.objects.filter(username=data['username']).exists():
-            User.objects.create_superuser(
-                username=data['username'],
-                password=data['password'],
-                email=data.get('email', '')
-            )
-            return JsonResponse({'message': 'Superuser created!'})
-
-        return JsonResponse({'message': 'User already exists!'})
-
-
-# urlpatterns = [
-#     path('create-superuser/', create_superuser),  # ⚠️ REMOVE IN PRODUCTION
-
-#     path('admin/', admin.site.urls),
-
-#     # AUTH
-#     path('api/register/', register_view, name='register'),
-#     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-#     path('api/logout/', logout_view, name='logout'),
-#     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
-#     # EMAIL VERIFICATION
-#     path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
-
-#     # APPS
-#     path('', include('books.urls')),
-
-#     # PASSWORD RESET
-#     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
-
-#     # DOCS
-#     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
-#     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
-# ]
-from django.contrib import admin
-from django.urls import path, include
-from books.views import verify_email
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from books.views import reset_password_page
-
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # AUTH (ONLY ONCE HERE)
-    path('api/register/', include('books.urls')),  # OR keep register in books.urls
+    # AUTH
+    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    path('api/login/', TokenObtainPairView.as_view()),
-    path('api/token/refresh/', TokenRefreshView.as_view()),
+    # EMAIL VERIFICATION
+    path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
 
-    path('api/verify-email/<uidb64>/<token>/', verify_email),
+    # PASSWORD RESET
+    path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+    path('reset-password/<str:token>/', reset_password_page, name='reset-password'),
 
-    path('api/password_reset/', include('django_rest_passwordreset.urls')),
-    path('reset-password/<str:token>/', reset_password_page),
+    # ALL BOOKS APP URLS (register, logout, books, categories)
+    path('api/', include('books.urls')),
 
-    path('swagger/', include('books.urls')),  # OR keep swagger here
+    # SWAGGER
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
 ]

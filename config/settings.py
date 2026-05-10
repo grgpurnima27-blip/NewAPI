@@ -161,26 +161,33 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 Django settings for config project.
 """
+
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# =========================
+# CORE SETTINGS
+# =========================
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', '192.168.18.219']
+# IMPORTANT: Render + production safe hosts
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.onrender.com'
+]
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-# Application definition
-
+# =========================
+# INSTALLED APPS
+# =========================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -188,18 +195,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # THIRD PARTY
     'rest_framework',
-    'django_rest_passwordreset',
-    'books.apps.BooksConfig',
+    'corsheaders',
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
-    'corsheaders',
+    'django_rest_passwordreset',
+
+    # LOCAL APP
+    'books.apps.BooksConfig',
 ]
 
+# =========================
+# MIDDLEWARE
+# =========================
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # MUST BE FIRST
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Added for static files on Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -210,6 +225,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+# =========================
+# TEMPLATES
+# =========================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -227,8 +245,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
-# Database — uses DATABASE_URL env var on Render, falls back to SQLite locally
+# =========================
+# DATABASE (RENDER SAFE)
+# =========================
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -236,8 +255,9 @@ DATABASES = {
     )
 }
 
-
-# Password validation
+# =========================
+# PASSWORD VALIDATION
+# =========================
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -245,21 +265,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# JWT / REST Framework
-from datetime import timedelta
-
+# =========================
+# REST FRAMEWORK
+# =========================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',  
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5,
 }
 
+# =========================
+# SWAGGER
+# =========================
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'SECURITY_DEFINITIONS': {
@@ -269,54 +291,63 @@ SWAGGER_SETTINGS = {
             'in': 'header',
         }
     },
-    
 }
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     ),
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.IsAuthenticated',
-#     ),
-# }
-
+# =========================
+# PASSWORD RESET
+# =========================
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
-
-# Email — credentials loaded from environment variables
+# =========================
+# EMAIL CONFIG (GMAIL SMTP)
+# =========================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-BASE_URL = os.getenv('BASE_URL')
+# BASE URL FOR EMAIL LINKS (VERY IMPORTANT FOR RENDER)
+BASE_URL = os.environ.get('BASE_URL')
 
-
-# # Swagger
-# SWAGGER_SETTINGS = {
-#     'SECURITY_DEFINITIONS': {
-#         'Bearer': {
-#             'type': 'apiKey',
-#             'name': 'Authorization',
-#             'in': 'header',
-#         }
-#     },
-#     'USE_SESSION_AUTH': False,
-#     'SECURITY_DEFINITIONS': {},
-# }
-
-# CORS
-LOGIN_URL = '/admin/login/'
-# BASE_URL = 'https://newapi-jgbv.onrender.com'
-
-# Static files
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # ← add this line
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# =========================
+# CORS CONFIG (FIXED)
+# =========================
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'authorization',
+    'content-type',
+    'accept',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# =========================
+# LOGIN URL
+# =========================
+LOGIN_URL = '/admin/login/'
+
+# =========================
+# STATIC FILES (RENDER)
+# =========================
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

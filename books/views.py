@@ -181,15 +181,11 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 
 
 # PAGINATION
+
 
 class BookPagination(PageNumberPagination):
     page_size = 5
@@ -197,6 +193,7 @@ class BookPagination(PageNumberPagination):
 
 
 # VIEWSETS (BOOK API)
+
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
@@ -214,6 +211,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 # EMAIL VERIFICATION
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def verify_email(request, uidb64, token):
@@ -224,16 +222,17 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Email verified successfully"})
+            return Response({"message": "Email verified successfully. You can now log in."})
 
-        return Response({"error": "Invalid token"}, status=400)
+        return Response({"error": "Invalid or expired token."}, status=400)
 
     except Exception:
-        return Response({"error": "Invalid link"}, status=400)
+        return Response({"error": "Invalid verification link."}, status=400)
 
 
 
 # REGISTER
+
 
 @swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
@@ -249,59 +248,47 @@ def register_view(request):
     email = serializer.validated_data.get('email', '')
 
     if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already exists"}, status=400)
+        return Response({"error": "Username already exists."}, status=400)
+
+    if not email:
+        return Response({"error": "Email is required."}, status=400)
+
+    if User.objects.filter(email=email).exists():
+        return Response({"error": "Email already registered."}, status=400)
 
     user = User.objects.create_user(
         username=username,
         password=password,
-        email=email
+        email=email,
     )
-
     user.is_active = False
     user.save()
 
+    # Build verification link
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-
     BASE_URL = settings.BASE_URL
     verify_link = f"{BASE_URL}/api/verify-email/{uid}/{token}/"
 
-    send_mail(
-        subject="Verify your email",
-        message=f"Click to verify:\n{verify_link}",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False
-    )
+    try:
+        send_mail(
+            subject="Verify your email - Book API",
+            message=f"Hi {username},\n\nClick the link below to verify your email:\n\n{verify_link}\n\nIf you did not register, ignore this email.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        # If email fails, delete the user so they can try again
+        user.delete()
+        return Response({"error": f"Failed to send verification email: {str(e)}"}, status=500)
 
-    return Response({"message": "User created. Check email."}, status=201)
+    return Response({"message": "Registration successful. Please check your email to verify your account."}, status=201)
 
-@csrf_exempt
-def reset_password_page(request, token):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            new_password = data.get("password")
 
-            # django-rest-passwordreset stores token in DB
-            from django_rest_passwordreset.models import ResetPasswordToken
-
-            reset_obj = ResetPasswordToken.objects.get(key=token)
-            user = reset_obj.user
-
-            user.password = make_password(new_password)
-            user.save()
-
-            reset_obj.delete()
-
-            return JsonResponse({"message": "Password reset successful"})
-
-        except Exception:
-            return JsonResponse({"error": "Invalid or expired token"}, status=400)
-
-    return JsonResponse({"message": "Send POST request with new password"})
 
 # LOGOUT (JWT BLACKLIST)
+
 
 @swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
@@ -309,16 +296,20 @@ def reset_password_page(request, token):
 def logout_view(request):
     try:
         refresh = request.data.get("refresh")
+        if not refresh:
+            return Response({"error": "Refresh token is required."}, status=400)
+
         token = RefreshToken(refresh)
         token.blacklist()
 
-        return Response({"message": "Logged out successfully"}, status=205)
+        return Response({"message": "Logged out successfully."}, status=205)
 
     except Exception:
-        return Response({"error": "Invalid token"}, status=400)
+        return Response({"error": "Invalid or expired token."}, status=400)
 
 
 
-# PASSWORD RESET PAGE
+# PASSWORD RESET PAGE (HTML)
+
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
