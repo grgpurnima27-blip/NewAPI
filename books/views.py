@@ -181,18 +181,23 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
-# ======================
+
 # PAGINATION
-# ======================
+
 class BookPagination(PageNumberPagination):
     page_size = 5
 
 
-# ======================
+
 # VIEWSETS (BOOK API)
-# ======================
+
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
     serializer_class = BookSerializer
@@ -206,9 +211,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# ======================
+
 # EMAIL VERIFICATION
-# ======================
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def verify_email(request, uidb64, token):
@@ -227,9 +232,9 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid link"}, status=400)
 
 
-# ======================
+
 # REGISTER
-# ======================
+
 @swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -271,10 +276,33 @@ def register_view(request):
 
     return Response({"message": "User created. Check email."}, status=201)
 
+@csrf_exempt
+def reset_password_page(request, token):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            new_password = data.get("password")
 
-# ======================
+            # django-rest-passwordreset stores token in DB
+            from django_rest_passwordreset.models import ResetPasswordToken
+
+            reset_obj = ResetPasswordToken.objects.get(key=token)
+            user = reset_obj.user
+
+            user.password = make_password(new_password)
+            user.save()
+
+            reset_obj.delete()
+
+            return JsonResponse({"message": "Password reset successful"})
+
+        except Exception:
+            return JsonResponse({"error": "Invalid or expired token"}, status=400)
+
+    return JsonResponse({"message": "Send POST request with new password"})
+
 # LOGOUT (JWT BLACKLIST)
-# ======================
+
 @swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -290,8 +318,7 @@ def logout_view(request):
         return Response({"error": "Invalid token"}, status=400)
 
 
-# ======================
+
 # PASSWORD RESET PAGE
-# ======================
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
