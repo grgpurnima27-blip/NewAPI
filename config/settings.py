@@ -293,6 +293,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+BASE_URL = os.getenv('BASE_URL')
+
 
 # # Swagger
 # SWAGGER_SETTINGS = {
@@ -308,11 +312,11 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 # }
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True
 LOGIN_URL = '/admin/login/'
-BASE_URL = 'https://newapi-jgbv.onrender.com'
+# BASE_URL = 'https://newapi-jgbv.onrender.com'
 
 # Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # ← add this line
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+CORS_ALLOW_ALL_ORIGINS = True
