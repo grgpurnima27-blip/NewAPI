@@ -303,16 +303,22 @@ PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 # =========================
 # EMAIL CONFIG (GMAIL SMTP)
 # =========================
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True 
-EMAIL_USE_TLS = False     
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 465
+# EMAIL_USE_SSL = True 
+# EMAIL_USE_TLS = False     
 
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
 # BASE URL FOR EMAIL LINKS (VERY IMPORTANT FOR RENDER)
 BASE_URL = os.environ.get('BASE_URL')
