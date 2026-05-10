@@ -160,61 +160,57 @@
 
 # def reset_password_page(request, token):
 #     return render(request, 'reset_password.html', {'token': token})
+
+    
+from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.mail import send_mail
-from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
-from django.http import JsonResponse
+
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.pagination import PageNumberPagination
+
+from drf_yasg.utils import swagger_auto_schema
+
+from .models import Book, Category
+from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
 
 
-# =========================
-# REGISTER USER + SEND EMAIL
-# =========================
-def register_user(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-
-        # create user (inactive first)
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
-        user.is_active = False
-        user.save()
-
-        # generate token
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        # Render-safe BASE_URL
-        base_url = settings.BASE_URL
-
-        verify_link = f"{base_url}/api/verify-email/{uid}/{token}/"
-
-        # send email
-        send_mail(
-            subject="Verify your email",
-            message=f"Click the link to verify your account:\n\n{verify_link}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
-        return JsonResponse({
-            "message": "User created successfully. Check your email to verify account."
-        })
-
-    return JsonResponse({"error": "Only POST method allowed"}, status=400)
+# ======================
+# PAGINATION
+# ======================
+class BookPagination(PageNumberPagination):
+    page_size = 5
 
 
-# =========================
-# VERIFY EMAIL LINK
-# =========================
+# ======================
+# VIEWSETS (BOOK API)
+# ======================
+class BookViewSet(viewsets.ModelViewSet):
+    queryset = Book.objects.all().order_by('-created_at')
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = BookPagination
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+# ======================
+# EMAIL VERIFICATION
+# ======================
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def verify_email(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
@@ -223,12 +219,79 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
+            return Response({"message": "Email verified successfully"})
 
-            return JsonResponse({
-                "message": "Email verified successfully. You can now login."
-            })
-
-        return JsonResponse({"error": "Invalid or expired token"}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
     except Exception:
-        return JsonResponse({"error": "Invalid request"}, status=400)
+        return Response({"error": "Invalid link"}, status=400)
+
+
+# ======================
+# REGISTER
+# ======================
+@swagger_auto_schema(method='post', request_body=RegisterSerializer)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_view(request):
+    serializer = RegisterSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
+    email = serializer.validated_data.get('email', '')
+
+    if User.objects.filter(username=username).exists():
+        return Response({"error": "Username already exists"}, status=400)
+
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        email=email
+    )
+
+    user.is_active = False
+    user.save()
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    BASE_URL = settings.BASE_URL
+    verify_link = f"{BASE_URL}/api/verify-email/{uid}/{token}/"
+
+    send_mail(
+        subject="Verify your email",
+        message=f"Click to verify:\n{verify_link}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+        fail_silently=False
+    )
+
+    return Response({"message": "User created. Check email."}, status=201)
+
+
+# ======================
+# LOGOUT (JWT BLACKLIST)
+# ======================
+@swagger_auto_schema(method='post', request_body=LogoutSerializer)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    try:
+        refresh = request.data.get("refresh")
+        token = RefreshToken(refresh)
+        token.blacklist()
+
+        return Response({"message": "Logged out successfully"}, status=205)
+
+    except Exception:
+        return Response({"error": "Invalid token"}, status=400)
+
+
+# ======================
+# PASSWORD RESET PAGE
+# ======================
+def reset_password_page(request, token):
+    return render(request, 'reset_password.html', {'token': token})

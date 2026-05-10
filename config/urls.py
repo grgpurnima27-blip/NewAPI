@@ -121,7 +121,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from books.views import register_view, logout_view, verify_email
+
+from books.views import register_view, logout_view, verify_email  # ✅ FIXED IMPORT
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -157,8 +159,7 @@ def create_superuser(request):
 
 
 urlpatterns = [
-    # ❌ REMOVE IN PRODUCTION (or wrap with DEBUG)
-    path('create-superuser/', create_superuser),
+    path('create-superuser/', create_superuser),  # ⚠️ REMOVE IN PRODUCTION
 
     path('admin/', admin.site.urls),
 
