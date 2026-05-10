@@ -70,6 +70,10 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from books.views import register_view, logout_view
 from books.views import verify_email
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Book API",
@@ -78,10 +82,28 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    authentication_classes=[],  # ← add this
+    authentication_classes=[],
 )
 
+
+# TEMPORARY - DELETE AFTER CREATING SUPERUSER
+@csrf_exempt
+def create_superuser(request):
+    if request.method == 'POST':
+        from django.contrib.auth.models import User
+        data = json.loads(request.body)
+        if not User.objects.filter(username=data['username']).exists():
+            User.objects.create_superuser(
+                username=data['username'],
+                password=data['password'],
+                email=data.get('email', '')
+            )
+            return JsonResponse({'message': 'Superuser created!'})
+        return JsonResponse({'message': 'User already exists!'})
+
+
 urlpatterns = [
+    path('create-superuser/', create_superuser),  # ← TEMPORARY, DELETE AFTER USE
     path('admin/', admin.site.urls),
     path('api/register/', register_view, name='register'),
     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -92,5 +114,4 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
-
 ]

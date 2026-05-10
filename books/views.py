@@ -7,11 +7,15 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.pagination import PageNumberPagination  # ← added
+from rest_framework.pagination import PageNumberPagination
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -28,13 +32,13 @@ class BookPagination(PageNumberPagination):
     max_page_size = 5
 
 
-#  BOOK API
+# BOOK API
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    pagination_class = BookPagination  # ← added
+    pagination_class = BookPagination
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -51,18 +55,27 @@ def verify_email(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = User.objects.get(pk=uid)
-    except:
-        return Response({'error': 'Invalid verification link'}, status=400)
+    except Exception:
+        return Response(
+            {'error': 'Invalid verification link'},
+            status=400
+        )
 
     if default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
-        return Response({'message': 'Email verified successfully! You can now login.'})
 
-    return Response({'error': 'Invalid or expired token'}, status=400)
+        return Response({
+            'message': 'Email verified successfully! You can now login.'
+        })
+
+    return Response(
+        {'error': 'Invalid or expired token'},
+        status=400
+    )
 
 
-#  REGISTER USER
+# REGISTER USER
 
 @swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
@@ -71,7 +84,10 @@ def register_view(request):
     serializer = RegisterSerializer(data=request.data)
 
     if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     username = serializer.validated_data.get('username')
     password = serializer.validated_data.get('password')
@@ -88,9 +104,15 @@ def register_view(request):
         password=password,
         email=email
     )
-    user.is_active = False
+
+    # TEMPORARY: activate user directly
+    user.is_active = True
     user.save()
 
+    # EMAIL VERIFICATION TEMPORARILY DISABLED
+    # Uncomment later after SMTP/email is configured correctly
+
+    """
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
@@ -104,13 +126,14 @@ def register_view(request):
         recipient_list=[email],
         fail_silently=False
     )
+    """
 
     return Response({
-        'message': 'Account created successfully! Check your email to verify.'
+        'message': 'Account created successfully!'
     }, status=status.HTTP_201_CREATED)
 
 
-#  LOGOUT
+# LOGOUT
 
 @swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
@@ -133,6 +156,7 @@ def logout_view(request):
         )
 
 
-#  RESET PASSWORD PAGE
+# RESET PASSWORD PAGE
+
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
