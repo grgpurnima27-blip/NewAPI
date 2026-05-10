@@ -181,6 +181,8 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
+from django.dispatch import receiver
+from django_rest_passwordreset.signals import reset_password_token_created
 
 
 
@@ -317,7 +319,18 @@ def test_email(request):
 
     return Response(results)
 
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    BASE_URL = settings.BASE_URL
+    reset_link = f"{BASE_URL}/reset-password/{reset_password_token.key}/"
 
+    send_mail(
+        subject="Reset your password - Book API",
+        message=f"Click here to reset your password: {reset_link}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[reset_password_token.user.email],
+        fail_silently=False,
+    )
 
 # LOGOUT (JWT BLACKLIST)
 
