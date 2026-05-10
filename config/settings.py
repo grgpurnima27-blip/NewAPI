@@ -182,7 +182,8 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.onrender.com'
+    '.onrender.com',
+    "192.168.18.219",
 ]
 
 # =========================

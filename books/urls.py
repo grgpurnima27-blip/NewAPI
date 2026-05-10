@@ -13,7 +13,7 @@
 # ]
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import BookViewSet, CategoryViewSet, register_view, logout_view
+from .views import BookViewSet, CategoryViewSet, register_view, logout_view, test_email
 
 router = DefaultRouter()
 router.register(r'books', BookViewSet)
@@ -23,4 +23,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
+    path('test-email/', test_email, name='test-email'),
 ]

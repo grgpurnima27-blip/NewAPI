@@ -285,6 +285,38 @@ def register_view(request):
 
     return Response({"message": "Registration successful. Please check your email to verify your account."}, status=201)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def test_email(request):
+    results = {}
+    
+    # Test 1 - check settings loaded
+    try:
+        results['EMAIL_BACKEND'] = settings.EMAIL_BACKEND
+        results['EMAIL_HOST_USER'] = settings.EMAIL_HOST_USER
+        results['SENDGRID_API_KEY_SET'] = bool(getattr(settings, 'SENDGRID_API_KEY', None))
+        results['BASE_URL'] = settings.BASE_URL
+        results['DEFAULT_FROM_EMAIL'] = settings.DEFAULT_FROM_EMAIL
+    except Exception as e:
+        results['settings_error'] = str(e)
+
+    # Test 2 - try sending email
+    try:
+        send_mail(
+            subject='Test Email from Django',
+            message='If you receive this, email is working!',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[request.data.get('email')],
+            fail_silently=False,
+        )
+        results['email_sent'] = True
+        results['email_error'] = None
+    except Exception as e:
+        results['email_sent'] = False
+        results['email_error'] = str(e)
+
+    return Response(results)
+
 
 
 # LOGOUT (JWT BLACKLIST)
