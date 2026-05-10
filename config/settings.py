@@ -314,13 +314,28 @@ PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
-SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+# EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+# SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
-# BASE URL FOR EMAIL LINKS (VERY IMPORTANT FOR RENDER)
+# # BASE URL FOR EMAIL LINKS (VERY IMPORTANT FOR RENDER)
+# BASE_URL = os.environ.get('BASE_URL')
+
+# =========================
+# EMAIL CONFIG (MAILTRAP)
+# =========================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = os.environ.get('MAILTRAP_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('MAILTRAP_PASSWORD')
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = os.environ.get('MAILTRAP_USER')
+
+# BASE URL FOR EMAIL LINKS
 BASE_URL = os.environ.get('BASE_URL')
 
 # =========================
