@@ -136,7 +136,7 @@ def test_email(request):
             message='If you receive this, email is working!',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[request.data.get('email')],
-            fail_silently=False,
+            fail_silently=True,
         )
         results['email_sent'] = True
         results['email_error'] = None
