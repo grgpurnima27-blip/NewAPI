@@ -134,13 +134,13 @@ PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 # EMAIL CONFIG (MAILTRAP)
 # =========================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = os.environ.get('MAILTRAP_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('MAILTRAP_PASSWORD')
-EMAIL_PORT = 2525
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-DEFAULT_FROM_EMAIL = os.environ.get('MAILTRAP_USER')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
 # BASE URL FOR EMAIL LINKS — FIXED
 BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
