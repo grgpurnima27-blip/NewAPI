@@ -336,7 +336,7 @@ EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = os.environ.get('MAILTRAP_USER')
 
 # BASE URL FOR EMAIL LINKS
-BASE_URL = os.environ.get('BASE_URL')
+BASE_URL = os.environ.get('http://192.168.18.181:3000')
 
 # =========================
 # CORS CONFIG (FIXED)
