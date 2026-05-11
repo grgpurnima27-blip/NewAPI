@@ -19,6 +19,8 @@ from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
+import resend
+from django.conf import settings
 
 
 # PAGINATION
@@ -148,19 +150,33 @@ def test_email(request):
 
 # PASSWORD RESET
 
+# @receiver(reset_password_token_created)
+# def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+#     BASE_URL = settings.BASE_URL
+#     reset_link = f"{BASE_URL}/reset-password/{reset_password_token.key}/"
+
+#     try:
+#         send_mail(
+#             subject="Reset your password - Book API",
+#             message=f"Click here to reset your password: {reset_link}",
+#             from_email=settings.DEFAULT_FROM_EMAIL,
+#             recipient_list=[reset_password_token.user.email],
+#             fail_silently=False,
+#         )
+#     except Exception as e:
+        # print(f"[PASSWORD RESET] Email failed: {e}")
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-    BASE_URL = settings.BASE_URL
-    reset_link = f"{BASE_URL}/reset-password/{reset_password_token.key}/"
+    reset_link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
 
     try:
-        send_mail(
-            subject="Reset your password - Book API",
-            message=f"Click here to reset your password: {reset_link}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[reset_password_token.user.email],
-            fail_silently=False,
-        )
+        resend.api_key = settings.RESEND_API_KEY
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": reset_password_token.user.email,
+            "subject": "Reset your password - Book API",
+            "html": f"<p>Click here to reset your password: <a href='{reset_link}'>{reset_link}</a></p>"
+        })
     except Exception as e:
         print(f"[PASSWORD RESET] Email failed: {e}")
 
