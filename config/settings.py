@@ -173,6 +173,7 @@ CORS_ALLOW_METHODS = [
 # LOGIN URL
 # =========================
 LOGIN_URL = '/admin/login/'
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
 # =========================
 # STATIC FILES
