@@ -27,7 +27,7 @@ class BookPagination(PageNumberPagination):
     page_size = 5
 
 
-# VIEWSETS (BOOK API)
+# VIEWSETS
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
@@ -94,7 +94,6 @@ def register_view(request):
     user.is_active = False
     user.save()
 
-    # Build verification link
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     BASE_URL = settings.BASE_URL
@@ -115,7 +114,7 @@ def register_view(request):
     return Response({"message": "Registration successful. Please check your email to verify your account."}, status=201)
 
 
-# TEST EMAIL (for debugging)
+# TEST EMAIL
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -147,20 +146,8 @@ def test_email(request):
     return Response(results)
 
 
-# PASSWORD RESET SIGNAL — dispatch_uid prevents duplicate registration
+# PASSWORD RESET
 
-# @receiver(reset_password_token_created, dispatch_uid="unique_password_reset")
-# def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-#     BASE_URL = settings.BASE_URL
-#     reset_link = f"{BASE_URL}/reset-password/{reset_password_token.key}/"
-
-#     send_mail(
-#         subject="Reset your password - Book API",
-#         message=f"Click here to reset your password: {reset_link}",
-#         from_email=settings.DEFAULT_FROM_EMAIL,
-#         recipient_list=[reset_password_token.user.email],
-#         fail_silently=False,
-#     )
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     BASE_URL = settings.BASE_URL
@@ -177,7 +164,8 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     except Exception as e:
         print(f"[PASSWORD RESET] Email failed: {e}")
 
-# LOGOUT (JWT BLACKLIST)
+
+# LOGOUT
 
 @swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
@@ -197,8 +185,7 @@ def logout_view(request):
         return Response({"error": "Invalid or expired token."}, status=400)
 
 
-# PASSWORD RESET PAGE (HTML)
+# PASSWORD RESET PAGE
 
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
-

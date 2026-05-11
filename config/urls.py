@@ -148,7 +148,7 @@ urlpatterns = [
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('reset-password/<str:token>/', reset_password_page, name='reset-password'),
 
-    # ALL BOOKS APP URLS (register, logout, books, categories)
+    # ALL BOOKS APP URLS
     path('api/', include('books.urls')),
 
     # SWAGGER
