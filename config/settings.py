@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 
-load_dotenv(override=False)  # FIXED
+load_dotenv(override=False)  
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -139,6 +139,7 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
 # BASE URL FOR EMAIL LINKS — FIXED
 BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
@@ -171,7 +172,6 @@ CORS_ALLOW_METHODS = [
 # LOGIN URL
 
 LOGIN_URL = '/admin/login/'
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
 
 # STATIC FILES

@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.conf import settings
-from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
@@ -19,7 +18,20 @@ from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
+ 
 import resend
+ 
+ 
+# HELPER: Send email via Resend
+ 
+def send_resend_email(to_email, subject, html_content):
+    resend.api_key = settings.RESEND_API_KEY
+    resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": to_email,
+        "subject": subject,
+        "html": html_content,
+    })
  
  
 # PAGINATION
@@ -97,16 +109,13 @@ def register_view(request):
  
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    BASE_URL = settings.BASE_URL
-    verify_link = f"{BASE_URL}/api/verify-email/{uid}/{token}/"
+    verify_link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
  
     try:
-        send_mail(
+        send_resend_email(
+            to_email=email,
             subject="Verify your email - Book API",
-            message=f"Hi {username},\n\nClick the link below to verify your email:\n\n{verify_link}\n\nIf you did not register, ignore this email.",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
+            html_content="<h2>Hi " + username + ",</h2><p>Click the link below to verify your email:</p><p><a href='" + verify_link + "'>" + verify_link + "</a></p><p>If you did not register, ignore this email.</p>"
         )
     except Exception as e:
         user.delete()
@@ -121,22 +130,11 @@ def register_view(request):
 @permission_classes([AllowAny])
 def test_email(request):
     results = {}
- 
     try:
-        results['EMAIL_BACKEND'] = settings.EMAIL_BACKEND
-        results['EMAIL_HOST_USER'] = settings.EMAIL_HOST_USER
-        results['BASE_URL'] = settings.BASE_URL
-        results['DEFAULT_FROM_EMAIL'] = settings.DEFAULT_FROM_EMAIL
-    except Exception as e:
-        results['settings_error'] = str(e)
- 
-    try:
-        send_mail(
+        send_resend_email(
+            to_email=request.data.get('email'),
             subject='Test Email from Django',
-            message='If you receive this, email is working!',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request.data.get('email')],
-            fail_silently=True,
+            html_content='<p>If you receive this, email is working!</p>'
         )
         results['email_sent'] = True
         results['email_error'] = None
@@ -154,13 +152,11 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     reset_link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
  
     try:
-        resend.api_key = settings.RESEND_API_KEY
-        resend.Emails.send({
-            "from": "onboarding@resend.dev",
-            "to": reset_password_token.user.email,
-            "subject": "Reset your password - Book API",
-            "html": f"<p>Click here to reset your password: <a href='{reset_link}'>{reset_link}</a></p>"
-        })
+        send_resend_email(
+            to_email=reset_password_token.user.email,
+            subject="Reset your password - Book API",
+            html_content="<h2>Password Reset</h2><p>Click the link below to reset your password:</p><p><a href='" + reset_link + "'>" + reset_link + "</a></p><p>If you did not request this, ignore this email.</p>"
+        )
     except Exception as e:
         print(f"[PASSWORD RESET] Email failed: {e}")
  
