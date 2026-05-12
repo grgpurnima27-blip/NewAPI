@@ -1,13 +1,47 @@
-import resend
+from mailjet_rest import Client
 from django.conf import settings
 
+
 def send_reset_email(email, token):
+
     reset_link = f"{settings.BASE_URL}/reset-password/{token}/"
-    
-    resend.api_key = settings.RESEND_API_KEY
-    resend.Emails.send({
-        "from": "onboarding@resend.dev",
-        "to": email,
-        "subject": "Password Reset",
-        "html": f"<p>Click here to reset your password: <a href='{reset_link}'>{reset_link}</a></p>"
-    })
+
+    mailjet = Client(
+        auth=(
+            settings.MAILJET_API_KEY,
+            settings.MAILJET_API_SECRET
+        ),
+        version='v3.1'
+    )
+
+    data = {
+        'Messages': [
+            {
+                "From": {
+                    "Email": settings.MAILJET_SENDER_EMAIL,
+                    "Name": settings.MAILJET_SENDER_NAME
+                },
+                "To": [
+                    {
+                        "Email": email,
+                    }
+                ],
+                "Subject": "Password Reset",
+                "HTMLPart": f"""
+                    <p>Click below to reset your password:</p>
+                    <p>
+                        <a href="{reset_link}">
+                            Reset Password
+                        </a>
+                    </p>
+                """
+            }
+        ]
+    }
+
+    result = mailjet.send.create(data=data)
+
+    print(result.status_code)
+    print(result.json())
+
+    return result.json()
