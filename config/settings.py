@@ -393,6 +393,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ================= CORE =================
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
+
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
@@ -441,6 +442,25 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 
+# ================= TEMPLATES (IMPORTANT FIX) =================
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+
 # ================= DATABASE =================
 
 DATABASES = {
@@ -480,8 +500,6 @@ SWAGGER_SETTINGS = {
 
 # ================= EMAIL (SMTP - GMAIL) =================
 
-# ================= EMAIL (SMTP - GMAIL WORKING ON RENDER) =================
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = 'smtp.gmail.com'
@@ -497,6 +515,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # ================= PASSWORD RESET =================
 
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
+
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 
@@ -515,4 +534,5 @@ CORS_ALLOW_CREDENTIALS = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

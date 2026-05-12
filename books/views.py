@@ -205,18 +205,14 @@ from drf_yasg.utils import swagger_auto_schema
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
 
+from django.core.mail import EmailMessage
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
 
-from django.core.mail import EmailMessage
 
-
-# ================= EMAIL HELPER =================
+# ================= EMAIL =================
 
 def send_email(to_email, subject, html_content):
-    if not to_email:
-        raise Exception("Email is required")
-
     email = EmailMessage(
         subject=subject,
         body=html_content,
@@ -264,15 +260,14 @@ def verify_email(request, uidb64, token):
             user.save()
             return Response({"message": "Email verified successfully"})
 
-        return Response({"error": "Invalid or expired token"}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
-    except Exception:
-        return Response({"error": "Invalid verification link"}, status=400)
+    except:
+        return Response({"error": "Invalid link"}, status=400)
 
 
 # ================= REGISTER =================
 
-@swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -281,61 +276,43 @@ def register_view(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
 
-    username = serializer.validated_data['username']
-    password = serializer.validated_data['password']
-    email = serializer.validated_data['email']
-
-    if User.objects.filter(username=username).exists():
-        return Response({"error": "Username exists"}, status=400)
-
-    if User.objects.filter(email=email).exists():
-        return Response({"error": "Email exists"}, status=400)
-
     user = User.objects.create_user(
-        username=username,
-        password=password,
-        email=email,
+        username=serializer.validated_data['username'],
+        password=serializer.validated_data['password'],
+        email=serializer.validated_data['email'],
         is_active=False
     )
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
-    verify_link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
+    link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
 
     send_email(
-        to_email=email,
-        subject="Verify your email",
-        html_content=f"""
-            <h2>Welcome {username}</h2>
-            <p>Click below to verify:</p>
-            <a href="{verify_link}">{verify_link}</a>
-        """
+        user.email,
+        "Verify Email",
+        f"Click to verify: {link}"
     )
 
-    return Response({"message": "Check email to verify account"}, status=201)
+    return Response({"message": "Check email for verification"}, status=201)
 
 
-# ================= PASSWORD RESET =================
+# ================= PASSWORD RESET SIGNAL =================
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
 
-    reset_link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
+    link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
 
     send_email(
-        to_email=reset_password_token.user.email,
-        subject="Reset Password",
-        html_content=f"""
-            <h2>Password Reset</h2>
-            <a href="{reset_link}">Reset Password</a>
-        """
+        reset_password_token.user.email,
+        "Reset Password",
+        f"Click here: {link}"
     )
 
 
 # ================= LOGOUT =================
 
-@swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
@@ -343,9 +320,8 @@ def logout_view(request):
         refresh = request.data.get("refresh")
         token = RefreshToken(refresh)
         token.blacklist()
-        return Response({"message": "Logged out"}, status=205)
-
-    except Exception:
+        return Response({"message": "Logged out"})
+    except:
         return Response({"error": "Invalid token"}, status=400)
 
 

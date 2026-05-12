@@ -122,36 +122,37 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from books.views import verify_email, reset_password_page
+from django_rest_passwordreset.views import ResetPasswordConfirm
 
 schema_view = get_schema_view(
     openapi.Info(
         title="Book API",
         default_version='v1',
-        description="API documentation for Book project",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    authentication_classes=[],
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     # AUTH
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/login/', TokenObtainPairView.as_view()),
+    path('api/token/refresh/', TokenRefreshView.as_view()),
 
-    # EMAIL VERIFICATION
-    path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
+    # EMAIL VERIFY
+    path('api/verify-email/<uidb64>/<token>/', verify_email),
 
     # PASSWORD RESET
-    path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
-    path('reset-password/<str:token>/', reset_password_page, name='reset-password'),
+    path('api/password_reset/', include('django_rest_passwordreset.urls')),
+    path('api/password_reset/confirm/', ResetPasswordConfirm.as_view()),
 
-    # ALL BOOKS APP URLS
+    # RESET PAGE
+    path('reset-password/<str:token>/', reset_password_page),
+
+    # APP
     path('api/', include('books.urls')),
 
     # SWAGGER
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
+    path('swagger/', schema_view.with_ui('swagger')),
 ]
