@@ -14,6 +14,7 @@ drf-yasg==1.21.15
 gunicorn==26.0.0
 idna==3.14
 inflection==0.5.1
+mailjet-rest==1.6.0
 MarkupSafe==3.0.3
 packaging==26.2
 psycopg2-binary==2.9.12

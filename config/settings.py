@@ -129,7 +129,7 @@ DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 
-# EMAIL CONFIG (MAILTRAP)
+# EMAIL CONFIG - Mailjet API
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -139,7 +139,10 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+# Mailjet API Keys
+MAILJET_API_KEY = os.environ.get('MAILJET_API_KEY')
+MAILJET_API_SECRET = os.environ.get('MAILJET_API_SECRET')
+# RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
 # BASE URL FOR EMAIL LINKS — FIXED
 BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
