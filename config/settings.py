@@ -479,6 +479,8 @@ SWAGGER_SETTINGS = {
 
 # ================= EMAIL (SMTP - GMAIL) =================
 
+# ================= EMAIL (SMTP - GMAIL WORKING ON RENDER) =================
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = 'smtp.gmail.com'

@@ -214,6 +214,9 @@ from django.core.mail import EmailMessage
 # ================= EMAIL HELPER =================
 
 def send_email(to_email, subject, html_content):
+    if not to_email:
+        raise Exception("Email is required")
+
     email = EmailMessage(
         subject=subject,
         body=html_content,
@@ -230,7 +233,7 @@ class BookPagination(PageNumberPagination):
     page_size = 5
 
 
-# ================= BOOK VIEW =================
+# ================= BOOK =================
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
@@ -239,7 +242,7 @@ class BookViewSet(viewsets.ModelViewSet):
     pagination_class = BookPagination
 
 
-# ================= CATEGORY VIEW =================
+# ================= CATEGORY =================
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -247,7 +250,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# ================= EMAIL VERIFICATION =================
+# ================= EMAIL VERIFY =================
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -259,12 +262,12 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Email verified successfully."})
+            return Response({"message": "Email verified successfully"})
 
-        return Response({"error": "Invalid or expired token."}, status=400)
+        return Response({"error": "Invalid or expired token"}, status=400)
 
     except Exception:
-        return Response({"error": "Invalid verification link."}, status=400)
+        return Response({"error": "Invalid verification link"}, status=400)
 
 
 # ================= REGISTER =================
@@ -283,10 +286,10 @@ def register_view(request):
     email = serializer.validated_data['email']
 
     if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already exists"}, status=400)
+        return Response({"error": "Username exists"}, status=400)
 
     if User.objects.filter(email=email).exists():
-        return Response({"error": "Email already exists"}, status=400)
+        return Response({"error": "Email exists"}, status=400)
 
     user = User.objects.create_user(
         username=username,
@@ -310,7 +313,7 @@ def register_view(request):
         """
     )
 
-    return Response({"message": "Check your email to verify account"}, status=201)
+    return Response({"message": "Check email to verify account"}, status=201)
 
 
 # ================= PASSWORD RESET =================
@@ -325,8 +328,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         subject="Reset Password",
         html_content=f"""
             <h2>Password Reset</h2>
-            <p>Click below:</p>
-            <a href="{reset_link}">{reset_link}</a>
+            <a href="{reset_link}">Reset Password</a>
         """
     )
 
@@ -347,7 +349,7 @@ def logout_view(request):
         return Response({"error": "Invalid token"}, status=400)
 
 
-# ================= PASSWORD RESET PAGE =================
+# ================= RESET PAGE =================
 
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
