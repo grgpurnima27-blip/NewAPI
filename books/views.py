@@ -193,7 +193,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -204,48 +204,33 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
+
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
 
-from mailjet_rest import Client
+from django.core.mail import EmailMessage
 
 
-# HELPER: Send email via Mailjet
+# ================= EMAIL HELPER =================
 
-def send_mailjet_email(to_email, subject, html_content):
-    mailjet = Client(
-        auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET),
-        version='v3.1'
+def send_email(to_email, subject, html_content):
+    email = EmailMessage(
+        subject=subject,
+        body=html_content,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email],
     )
-    data = {
-        'Messages': [
-            {
-                "From": {
-                    "Email": "grgpurnima27@gmail.com",
-                    "Name": "Book API"
-                },
-                "To": [
-                    {
-                        "Email": to_email,
-                    }
-                ],
-                "Subject": subject,
-                "HTMLPart": html_content,
-            }
-        ]
-    }
-    result = mailjet.send.create(data=data)
-    if result.status_code != 200:
-        raise Exception(f"Mailjet error: {result.json()}")
+    email.content_subtype = "html"
+    email.send(fail_silently=False)
 
 
-# PAGINATION
+# ================= PAGINATION =================
 
 class BookPagination(PageNumberPagination):
     page_size = 5
 
 
-# VIEWSETS
+# ================= BOOK VIEW =================
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
@@ -254,13 +239,15 @@ class BookViewSet(viewsets.ModelViewSet):
     pagination_class = BookPagination
 
 
+# ================= CATEGORY VIEW =================
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# EMAIL VERIFICATION
+# ================= EMAIL VERIFICATION =================
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -272,7 +259,7 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Email verified successfully. You can now log in."})
+            return Response({"message": "Email verified successfully."})
 
         return Response({"error": "Invalid or expired token."}, status=400)
 
@@ -280,7 +267,7 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid verification link."}, status=400)
 
 
-# REGISTER
+# ================= REGISTER =================
 
 @swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
@@ -293,80 +280,58 @@ def register_view(request):
 
     username = serializer.validated_data['username']
     password = serializer.validated_data['password']
-    email = serializer.validated_data.get('email', '')
+    email = serializer.validated_data['email']
 
     if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already exists."}, status=400)
-
-    if not email:
-        return Response({"error": "Email is required."}, status=400)
+        return Response({"error": "Username already exists"}, status=400)
 
     if User.objects.filter(email=email).exists():
-        return Response({"error": "Email already registered."}, status=400)
+        return Response({"error": "Email already exists"}, status=400)
 
     user = User.objects.create_user(
         username=username,
         password=password,
         email=email,
+        is_active=False
     )
-    user.is_active = False
-    user.save()
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
+
     verify_link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
 
-    try:
-        send_mailjet_email(
-            to_email=email,
-            subject="Verify your email - Book API",
-            html_content="<h2>Hi " + username + ",</h2><p>Click the link below to verify your email:</p><p><a href='" + verify_link + "'>" + verify_link + "</a></p><p>If you did not register, ignore this email.</p>"
-        )
-    except Exception as e:
-        user.delete()
-        return Response({"error": f"Failed to send verification email: {str(e)}"}, status=500)
+    send_email(
+        to_email=email,
+        subject="Verify your email",
+        html_content=f"""
+            <h2>Welcome {username}</h2>
+            <p>Click below to verify:</p>
+            <a href="{verify_link}">{verify_link}</a>
+        """
+    )
 
-    return Response({"message": "Registration successful. Please check your email to verify your account."}, status=201)
-
-
-# TEST EMAIL
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def test_email(request):
-    results = {}
-    try:
-        send_mailjet_email(
-            to_email=request.data.get('email'),
-            subject='Test Email from Django',
-            html_content='<p>If you receive this, email is working!</p>'
-        )
-        results['email_sent'] = True
-        results['email_error'] = None
-    except Exception as e:
-        results['email_sent'] = False
-        results['email_error'] = str(e)
-
-    return Response(results)
+    return Response({"message": "Check your email to verify account"}, status=201)
 
 
-# PASSWORD RESET
+# ================= PASSWORD RESET =================
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+
     reset_link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
 
-    try:
-        send_mailjet_email(
-            to_email=reset_password_token.user.email,
-            subject="Reset your password - Book API",
-            html_content="<h2>Password Reset</h2><p>Click the link below to reset your password:</p><p><a href='" + reset_link + "'>" + reset_link + "</a></p><p>If you did not request this, ignore this email.</p>"
-        )
-    except Exception as e:
-        print(f"[PASSWORD RESET] Email failed: {e}")
+    send_email(
+        to_email=reset_password_token.user.email,
+        subject="Reset Password",
+        html_content=f"""
+            <h2>Password Reset</h2>
+            <p>Click below:</p>
+            <a href="{reset_link}">{reset_link}</a>
+        """
+    )
 
 
-# LOGOUT
+# ================= LOGOUT =================
 
 @swagger_auto_schema(method='post', request_body=LogoutSerializer)
 @api_view(['POST'])
@@ -374,19 +339,15 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
 def logout_view(request):
     try:
         refresh = request.data.get("refresh")
-        if not refresh:
-            return Response({"error": "Refresh token is required."}, status=400)
-
         token = RefreshToken(refresh)
         token.blacklist()
-
-        return Response({"message": "Logged out successfully."}, status=205)
+        return Response({"message": "Logged out"}, status=205)
 
     except Exception:
-        return Response({"error": "Invalid or expired token."}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
 
-# PASSWORD RESET PAGE
+# ================= PASSWORD RESET PAGE =================
 
 def reset_password_page(request, token):
     return render(request, 'reset_password.html', {'token': token})
