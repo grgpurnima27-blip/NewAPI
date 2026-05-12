@@ -7,9 +7,9 @@ load_dotenv(override=False)  # FIXED
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# =========================
+
 # CORE SETTINGS
-# =========================
+
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -19,9 +19,9 @@ ALLOWED_HOSTS = [
     '.onrender.com',
 ]
 
-# =========================
+
 # INSTALLED APPS
-# =========================
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,9 +37,9 @@ INSTALLED_APPS = [
     'books.apps.BooksConfig',
 ]
 
-# =========================
+
 # MIDDLEWARE
-# =========================
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -54,9 +54,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
-# =========================
+
 # TEMPLATES
-# =========================
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -74,9 +74,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# =========================
+
 # DATABASE
-# =========================
+
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -84,9 +84,9 @@ DATABASES = {
     )
 }
 
-# =========================
+
 # PASSWORD VALIDATION
-# =========================
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -94,9 +94,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# =========================
+
 # REST FRAMEWORK
-# =========================
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -108,9 +108,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 5,
 }
 
-# =========================
+
 # SWAGGER
-# =========================
+
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'SECURITY_DEFINITIONS': {
@@ -122,15 +122,15 @@ SWAGGER_SETTINGS = {
     },
 }
 
-# =========================
+
 # PASSWORD RESET
-# =========================
+
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
-# =========================
+
 # EMAIL CONFIG (MAILTRAP)
-# =========================
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -143,9 +143,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # BASE URL FOR EMAIL LINKS — FIXED
 BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
 
-# =========================
+
 # CORS CONFIG
-# =========================
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -167,15 +167,15 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-# =========================
+
 # LOGIN URL
-# =========================
+
 LOGIN_URL = '/admin/login/'
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
-# =========================
+
 # STATIC FILES
-# =========================
+
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
