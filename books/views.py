@@ -328,4 +328,6 @@ def logout_view(request):
 # ================= RESET PAGE =================
 
 def reset_password_page(request, token):
-    return render(request, 'reset_password.html', {'token': token})
+    return render(request, 'reset_password.html', {
+        'token': token
+    })

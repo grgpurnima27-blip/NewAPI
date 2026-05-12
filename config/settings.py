@@ -393,7 +393,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ================= CORE =================
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
-
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
@@ -442,12 +441,12 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 
-# ================= TEMPLATES (IMPORTANT FIX) =================
+# ================= TEMPLATES (🔥 FIX FOR 500 ERROR) =================
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # important
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -484,21 +483,7 @@ REST_FRAMEWORK = {
 }
 
 
-# ================= SWAGGER =================
-
-SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-        }
-    },
-}
-
-
-# ================= EMAIL (SMTP - GMAIL) =================
+# ================= EMAIL =================
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -512,22 +497,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-# ================= PASSWORD RESET =================
-
-DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
-
-PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
-
-
 # ================= BASE URL =================
 
-BASE_URL = os.environ.get('BASE_URL', 'https://your-app.onrender.com')
-
-
-# ================= CORS =================
-
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
 
 
 # ================= STATIC =================
@@ -536,3 +508,9 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# ================= CORS =================
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
