@@ -390,7 +390,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ================= CORE =================
+# CORE 
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
@@ -402,7 +402,7 @@ ALLOWED_HOSTS = [
 ]
 
 
-# ================= APPS =================
+# APPS 
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -422,7 +422,7 @@ INSTALLED_APPS = [
 ]
 
 
-# ================= MIDDLEWARE =================
+# MIDDLEWARE 
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -441,7 +441,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 
-# ================= TEMPLATES (🔥 FIX FOR 500 ERROR) =================
+# TEMPLATES (FIX FOR 500 ERROR) 
 
 TEMPLATES = [
     {
@@ -460,18 +460,44 @@ TEMPLATES = [
 ]
 
 
-# ================= DATABASE =================
+# DATABASE 
 
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.parse(
+#         os.environ.get("DATABASE_URL"),
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
+import os
+import dj_database_url
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ================= REST FRAMEWORK =================
+# DATABASE 
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+        )
+    }
+else:
+    # fallback for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+
+# REST FRAMEWORK 
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -483,7 +509,7 @@ REST_FRAMEWORK = {
 }
 
 
-# ================= EMAIL =================
+# EMAIL 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -497,12 +523,12 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-# ================= BASE URL =================
+# BASE URL 
 
 BASE_URL = os.environ.get('BASE_URL', 'https://newapi-jgbv.onrender.com')
 
 
-# ================= STATIC =================
+# STATIC 
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -510,7 +536,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# ================= CORS =================
+# CORS 
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
