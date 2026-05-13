@@ -1,8 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from cloudinary.models import CloudinaryField
 
-
-# CATEGORY MODEL
 
 class Category(models.Model):
     name = models.CharField(max_length=50)
@@ -10,8 +9,6 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
-# BOOK MODEL
 
 class Book(models.Model):
     title = models.CharField(max_length=52)
@@ -31,13 +28,20 @@ class Book(models.Model):
         return self.title
 
 
-# PROFILE MODEL
-
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    bio = models.TextField(blank=True, null=True)
-    profile_picture = models.CharField(max_length=255, blank=True, null=True)  # stores relative media path
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+
+    profile_picture = CloudinaryField(
+        'image',
+        blank=True,
+        null=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username}'s Profile"

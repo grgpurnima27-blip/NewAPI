@@ -59,25 +59,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# EMAIL VERIFY
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def verify_email(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-
-        if default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            return Response({"message": "Email verified successfully"})
-
-        return Response({"error": "Invalid token"}, status=400)
-
-    except:
-        return Response({"error": "Invalid link"}, status=400)
-
 
 # REGISTER
 
@@ -111,7 +92,28 @@ def register_view(request):
         f"Click to verify: <a href='{link}'>{link}</a>"
     )
 
-    return Response({"message": "Check email for verification"}, status=201)
+    return Response({"message": "Check email for "
+    "verification"}, status=201)
+
+# EMAIL VERIFY
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"message": "Email verified successfully"})
+
+        return Response({"error": "Invalid token"}, status=400)
+
+    except:
+        return Response({"error": "Invalid link"}, status=400)
+
 
 
 # PASSWORD RESET SIGNAL
