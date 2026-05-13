@@ -3,7 +3,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 
 
-# ================= AVATAR GENERATOR =================
+#  AVATAR GENERATOR 
 
 # 10 distinct pleasant colors, picked by hashing the username
 AVATAR_COLORS = [
@@ -46,7 +46,7 @@ def generate_avatar(user):
     return saved_path
 
 
-# ================= EMAIL SENDER =================
+# EMAIL SENDER 
 
 import smtplib
 from email.mime.multipart import MIMEMultipart
