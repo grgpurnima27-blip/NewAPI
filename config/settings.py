@@ -85,8 +85,6 @@ TEMPLATES = [
 ]
 
 
-# WSGI 
-
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
@@ -101,41 +99,10 @@ DATABASES = {
 }
 
 
-# PASSWORD VALIDATORS 
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# INTERNATIONALIZATION 
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-
 # STATIC 
 
 STATIC_URL = '/static/'
-
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
@@ -155,12 +122,7 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-# DEFAULT AUTO FIELD 
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# REST FRAMEWORK 
+# REST 
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -186,50 +148,28 @@ SWAGGER_SETTINGS = {
 }
 
 
-
-# EMAIL (RESEND) 
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # fallback (safe)
-
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
+# EMAIL (RESEND ONLY) 
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "onboarding@resend.dev"
+)
 
-# EMAIL 
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-# EMAIL_HOST = 'smtp.gmail.com'
-
-# EMAIL_PORT = 587
-
-# EMAIL_USE_TLS = True
-
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+BASE_URL = os.environ.get("BASE_URL", "https://your-app.onrender.com")
 
 
-# PASSWORD RESET 
+#  PASSWORD RESET 
 
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
-
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 
-# BASE URL 
-
-BASE_URL = os.environ.get(
-    'BASE_URL',
-    'https://your-app.onrender.com'
-)
-
-
-# CORS 
+# SECURITY 
 
 CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

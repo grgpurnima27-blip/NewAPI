@@ -4,12 +4,10 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 import resend
 
-# INIT RESEND
 
+# INIT RESEND
 resend.api_key = settings.RESEND_API_KEY
 
-
-# AVATAR GENERATOR (UNCHANGED)
 
 AVATAR_COLORS = [
     "#E74C3C", "#8E44AD", "#2980B9", "#27AE60", "#F39C12",
@@ -37,26 +35,27 @@ def generate_avatar(user):
 </svg>"""
 
     filename = f"profile_pictures/{user.username}.svg"
-    saved_path = default_storage.save(filename, ContentFile(svg.encode("utf-8")))
-    return saved_path
+    return default_storage.save(filename, ContentFile(svg.encode("utf-8")))
 
 
-# EMAIL SENDER (RESEND)
+# EMAIL RESET 
 
+def send_reset_email(to_email, token):
+    reset_link = f"{settings.BASE_URL}/reset-password/{token}/"
 
-def send_reset_email(to_email, subject, message, html_content=None):
-    try:
-        params = {
-            "from": "onboarding@resend.dev",
-            "to": [to_email],
-            "subject": subject,
-            "html": html_content or f"<p>{message}</p>",
-        }
+    resend.Emails.send({
+        "from": settings.DEFAULT_FROM_EMAIL,
+        "to": [to_email],
+        "subject": "Password Reset Request",
+        "html": f"""
+        <h2>Reset Your Password</h2>
+        <p>You requested a password reset.</p>
 
-        response = resend.Emails.send(params)
+        <a href="{reset_link}"
+           style="padding:10px 15px;background:#4F46E5;color:white;text-decoration:none;">
+           Reset Password
+        </a>
 
-        print("✅ EMAIL SENT RESPONSE:", response)
-
-    except Exception as e:
-        print("❌ EMAIL FAILED:", str(e))
-        raise e   # IMPORTANT: do NOT hide errors
+        <p>If this wasn't you, ignore this email.</p>
+        """
+    })
