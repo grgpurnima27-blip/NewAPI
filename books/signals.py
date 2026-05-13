@@ -1,15 +1,17 @@
+# books/signals.py
 from django.dispatch import receiver
-from django.db.models.signals import post_save
-from django.contrib.auth.models import User
-
-from .models import Profile
-from .utils import generate_avatar
+from django_rest_passwordreset.signals import reset_password_token_created
+from .utils import send_reset_email
 
 
-# AUTO CREATE PROFILE 
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        avatar_path = generate_avatar(instance)
-        Profile.objects.create(user=instance, profile_picture=avatar_path)
+    print("🔥 SIGNAL TRIGGERED")  # ADD THIS
+
+    send_reset_email(
+        to_email=reset_password_token.user.email,
+        subject="Password Reset",
+        message=f"Token: {reset_password_token.key}",
+        html_content=f"<p>Reset token: {reset_password_token.key}</p>"
+    )

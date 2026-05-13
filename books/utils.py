@@ -45,20 +45,18 @@ def generate_avatar(user):
 
 
 def send_reset_email(to_email, subject, message, html_content=None):
-    """
-    Sends email using Resend API
-    """
-
     try:
         params = {
-            "from": settings.DEFAULT_FROM_EMAIL,
+            "from": "onboarding@resend.dev",
             "to": [to_email],
             "subject": subject,
             "html": html_content or f"<p>{message}</p>",
         }
 
-        resend.Emails.send(params)
-        print("✅ Email sent successfully via Resend")
+        response = resend.Emails.send(params)
+
+        print("✅ EMAIL SENT RESPONSE:", response)
 
     except Exception as e:
-        print("❌ Resend email failed:", str(e))
+        print("❌ EMAIL FAILED:", str(e))
+        raise e   # IMPORTANT: do NOT hide errors
