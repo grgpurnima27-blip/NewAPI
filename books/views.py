@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.pagination import PageNumberPagination
 
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer, RegisterSerializer, LogoutSerializer
@@ -22,7 +23,7 @@ from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
 
 
-# EMAIL 
+# EMAIL
 
 def send_email(to_email, subject, html_content):
     email = EmailMessage(
@@ -35,13 +36,13 @@ def send_email(to_email, subject, html_content):
     email.send(fail_silently=False)
 
 
-# PAGINATION 
+# PAGINATION
 
 class BookPagination(PageNumberPagination):
     page_size = 5
 
 
-# BOOK 
+# BOOK
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by('-created_at')
@@ -50,7 +51,7 @@ class BookViewSet(viewsets.ModelViewSet):
     pagination_class = BookPagination
 
 
-# CATEGORY 
+# CATEGORY
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -58,7 +59,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-# EMAIL VERIFY 
+# EMAIL VERIFY
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -78,8 +79,13 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid link"}, status=400)
 
 
-# REGISTER 
+# REGISTER
 
+@swagger_auto_schema(
+    method='post',
+    request_body=RegisterSerializer,
+    responses={201: openapi.Response('User registered, check email for verification')}
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -95,21 +101,20 @@ def register_view(request):
         is_active=False
     )
 
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    uid   = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-
-    link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
+    link  = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
 
     send_email(
         user.email,
         "Verify Email",
-        f"Click to verify: {link}"
+        f"Click to verify: <a href='{link}'>{link}</a>"
     )
 
     return Response({"message": "Check email for verification"}, status=201)
 
 
-# PASSWORD RESET SIGNAL 
+# PASSWORD RESET SIGNAL
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
@@ -119,27 +124,30 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     send_email(
         reset_password_token.user.email,
         "Reset Password",
-        f"Click here: {link}"
+        f"<h2>Password Reset</h2><p>Click the link below to reset your password:</p><a href='{link}'>Reset Password</a>"
     )
 
 
-# LOGOUT 
+# LOGOUT
 
+@swagger_auto_schema(
+    method='post',
+    request_body=LogoutSerializer,
+    responses={200: openapi.Response('Logged out successfully')}
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     try:
         refresh = request.data.get("refresh")
-        token = RefreshToken(refresh)
+        token   = RefreshToken(refresh)
         token.blacklist()
         return Response({"message": "Logged out"})
     except:
         return Response({"error": "Invalid token"}, status=400)
 
 
-# RESET PAGE 
+# RESET PAGE
 
 def reset_password_page(request, token):
-    return render(request, 'reset_password.html', {
-        'token': token
-    })
+    return render(request, 'reset_password.html', {'token': token})
