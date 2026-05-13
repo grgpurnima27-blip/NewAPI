@@ -152,4 +152,8 @@ def logout_view(request):
 # RESET PAGE
 
 def reset_password_page(request, token):
-    return render(request, 'reset_password.html', {'token': token})
+    """
+    Renders the password reset HTML page.
+    Token is passed via URL and used in frontend JS.
+    """
+    return render(request, "reset_password.html", {"token": token})
