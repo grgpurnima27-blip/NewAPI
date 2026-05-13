@@ -4,15 +4,14 @@ from dotenv import load_dotenv
 import dj_database_url
 
 import cloudinary
-import cloudinary.uploader
-import cloudinary.api
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# CORE 
+
+# CORE
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
@@ -25,7 +24,8 @@ ALLOWED_HOSTS = [
 ]
 
 
-# APPS 
+
+# APPS
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -48,7 +48,8 @@ INSTALLED_APPS = [
 ]
 
 
-# MIDDLEWARE 
+
+# MIDDLEWARE
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -67,7 +68,8 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 
-# TEMPLATES 
+
+# TEMPLATES
 
 TEMPLATES = [
     {
@@ -88,7 +90,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# DATABASE 
+
+# DATABASE (FIXED)
 
 DATABASES = {
     'default': dj_database_url.parse(
@@ -99,19 +102,16 @@ DATABASES = {
 }
 
 
-# STATIC 
+
+# STATIC FILES
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-# MEDIA 
 
-MEDIA_URL = '/media/'
-
-
-# CLOUDINARY 
+# MEDIA (CLOUDINARY)
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -122,7 +122,8 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-# REST 
+
+# REST FRAMEWORK
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -134,7 +135,8 @@ REST_FRAMEWORK = {
 }
 
 
-# SWAGGER 
+
+# SWAGGER
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
@@ -148,7 +150,8 @@ SWAGGER_SETTINGS = {
 }
 
 
-# EMAIL (RESEND ONLY) 
+
+# EMAIL (RESEND)
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
@@ -157,16 +160,21 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "onboarding@resend.dev"
 )
 
-BASE_URL = os.environ.get("BASE_URL", "https://your-app.onrender.com")
+BASE_URL = os.environ.get(
+    "BASE_URL",
+    "https://your-app.onrender.com"
+)
 
 
-#  PASSWORD RESET 
+
+# PASSWORD RESET
 
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 
-# SECURITY 
+
+# SECURITY / CORS
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True

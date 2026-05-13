@@ -5,15 +5,23 @@ from django.conf import settings
 import resend
 
 
+
 # INIT RESEND
+
 resend.api_key = settings.RESEND_API_KEY
 
+
+
+# AVATAR COLORS
 
 AVATAR_COLORS = [
     "#E74C3C", "#8E44AD", "#2980B9", "#27AE60", "#F39C12",
     "#16A085", "#D35400", "#2C3E50", "#C0392B", "#1ABC9C",
 ]
 
+
+
+# AVATAR GENERATOR
 
 def generate_avatar(user):
     first = (user.first_name[0] if user.first_name else user.username[0]).upper()
@@ -38,7 +46,8 @@ def generate_avatar(user):
     return default_storage.save(filename, ContentFile(svg.encode("utf-8")))
 
 
-# EMAIL RESET 
+
+# PASSWORD RESET EMAIL (RESEND)
 
 def send_reset_email(to_email, token):
     reset_link = f"{settings.BASE_URL}/reset-password/{token}/"
@@ -57,5 +66,25 @@ def send_reset_email(to_email, token):
         </a>
 
         <p>If this wasn't you, ignore this email.</p>
+        """
+    })
+
+
+
+# OPTIONAL: VERIFICATION EMAIL (IF YOU MOVE LOGIC HERE LATER)
+
+def send_verification_email(user, link):
+    resend.Emails.send({
+        "from": settings.DEFAULT_FROM_EMAIL,
+        "to": [user.email],
+        "subject": "Verify Your Email",
+        "html": f"""
+        <h2>Verify Your Account</h2>
+        <p>Click below to activate your account:</p>
+
+        <a href="{link}"
+           style="padding:10px 15px;background:#16A34A;color:white;text-decoration:none;">
+           Verify Email
+        </a>
         """
     })
