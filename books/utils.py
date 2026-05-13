@@ -5,23 +5,15 @@ from django.conf import settings
 import resend
 
 
-
 # INIT RESEND
-
 resend.api_key = settings.RESEND_API_KEY
 
-
-
-# AVATAR COLORS
 
 AVATAR_COLORS = [
     "#E74C3C", "#8E44AD", "#2980B9", "#27AE60", "#F39C12",
     "#16A085", "#D35400", "#2C3E50", "#C0392B", "#1ABC9C",
 ]
 
-
-
-# AVATAR GENERATOR
 
 def generate_avatar(user):
     first = (user.first_name[0] if user.first_name else user.username[0]).upper()
@@ -46,45 +38,27 @@ def generate_avatar(user):
     return default_storage.save(filename, ContentFile(svg.encode("utf-8")))
 
 
-
-# PASSWORD RESET EMAIL (RESEND)
+# ✅ FIXED PASSWORD RESET EMAIL (IMPORTANT)
 
 def send_reset_email(to_email, token):
     reset_link = f"{settings.BASE_URL}/reset-password/{token}/"
 
-    resend.Emails.send({
-        "from": settings.DEFAULT_FROM_EMAIL,
-        "to": [to_email],
-        "subject": "Password Reset Request",
-        "html": f"""
-        <h2>Reset Your Password</h2>
-        <p>You requested a password reset.</p>
+    try:
+        resend.Emails.send({
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [to_email],
+            "subject": "Password Reset Request",
+            "html": f"""
+                <h2>Password Reset</h2>
+                <p>Click below to reset your password:</p>
 
-        <a href="{reset_link}"
-           style="padding:10px 15px;background:#4F46E5;color:white;text-decoration:none;">
-           Reset Password
-        </a>
+                <a href="{reset_link}"
+                   style="padding:10px 15px;background:#4F46E5;color:white;text-decoration:none;">
+                   Reset Password
+                </a>
 
-        <p>If this wasn't you, ignore this email.</p>
-        """
-    })
-
-
-
-# OPTIONAL: VERIFICATION EMAIL (IF YOU MOVE LOGIC HERE LATER)
-
-def send_verification_email(user, link):
-    resend.Emails.send({
-        "from": settings.DEFAULT_FROM_EMAIL,
-        "to": [user.email],
-        "subject": "Verify Your Email",
-        "html": f"""
-        <h2>Verify Your Account</h2>
-        <p>Click below to activate your account:</p>
-
-        <a href="{link}"
-           style="padding:10px 15px;background:#16A34A;color:white;text-decoration:none;">
-           Verify Email
-        </a>
-        """
-    })
+                <p>If you didn't request this, ignore this email.</p>
+            """
+        })
+    except Exception as e:
+        print("EMAIL ERROR:", e)

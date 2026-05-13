@@ -1,17 +1,36 @@
-# books/signals.py
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
-from .utils import send_reset_email
+from django.conf import settings
+
+import resend
+import logging
+
+logger = logging.getLogger(__name__)
+
+# SAFE INIT (won't crash if env missing)
+resend.api_key = getattr(settings, "RESEND_API_KEY", None)
 
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
 
-    print("🔥 SIGNAL TRIGGERED")  # ADD THIS
+    try:
+        reset_link = f"{settings.BASE_URL}/reset-password/{reset_password_token.key}/"
 
-    send_reset_email(
-        to_email=reset_password_token.user.email,
-        subject="Password Reset",
-        message=f"Token: {reset_password_token.key}",
-        html_content=f"<p>Reset token: {reset_password_token.key}</p>"
-    )
+        resend.Emails.send({
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [reset_password_token.user.email],
+            "subject": "Reset Your Password",
+            "html": f"""
+                <h2>Password Reset</h2>
+                <p>Click below to reset your password:</p>
+                <a href="{reset_link}">Reset Password</a>
+            """
+        })
+
+        print("🔥 Password reset email sent")
+
+    except Exception as e:
+        # ❗ NEVER crash Render because of email failure
+        logger.error(f"Email sending failed: {e}")
+        print("❌ Email failed but app continues running")

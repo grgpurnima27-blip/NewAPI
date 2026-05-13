@@ -153,6 +153,10 @@ SWAGGER_SETTINGS = {
 
 # EMAIL (RESEND)
 
+# EMAIL (RESEND SAFE) 
+# prevents silent crashes from bad email configs
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
 DEFAULT_FROM_EMAIL = os.environ.get(
@@ -164,7 +168,6 @@ BASE_URL = os.environ.get(
     "BASE_URL",
     "https://your-app.onrender.com"
 )
-
 
 
 # PASSWORD RESET
