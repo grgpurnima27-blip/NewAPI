@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.dispatch import receiver
+from django_rest_passwordreset.signals import reset_password_token_created
 from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import viewsets
