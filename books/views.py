@@ -71,34 +71,22 @@ def register_view(request):
     # Build verification link
     uid   = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    link  = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
+    # link  = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
+    link = f"{settings.BASE_URL}/reset-password/{uid}/{token}/"
 
     # Send verification email via Resend
     try:
         resend.Emails.send({
-            "from":    settings.DEFAULT_FROM_EMAIL,
-            "to":      [email],
-            "subject": "Verify Your Email",
-            "html": f"""
-                <h2>Welcome, {username}!</h2>
-                <p>Click the button below to verify your email and activate your account.</p>
-                <br>
-                <a href="{link}"
-                   style="
-                       padding: 10px 20px;
-                       background: #16A34A;
-                       color: white;
-                       text-decoration: none;
-                       border-radius: 5px;
-                       font-weight: bold;
-                   ">
-                   Verify Email
-                </a>
-                <br><br>
-                <p>If you did not create this account, ignore this email.</p>
-                <p style="color: #999; font-size: 12px;">Link expires after first use.</p>
-            """,
-        })
+    "from": settings.DEFAULT_FROM_EMAIL,
+    "to": [email],
+    "subject": "Reset Your Password",
+    "html": f"""
+        <h2>Password Reset Request</h2>
+        <p>Click below to reset your password:</p>
+        <a href="{link}">Reset Password</a>
+    """
+})
+        
         print(f"✅ Verification email sent to {email}")
     except Exception as e:
         # Roll back user creation if email fails so they can retry
@@ -243,9 +231,32 @@ def profile_update(request):
 def reset_password_page(request, uidb64, token):
     return render(request, "reset_password.html", {
         "uidb64": uidb64,
-        "token":  token,
+        "token": token,
     })
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_confirm(request):
+    uidb64 = request.data.get("uidb64")
+    token = request.data.get("token")
+    password = request.data.get("password")
+
+    if not uidb64 or not token or not password:
+        return Response({"error": "All fields required"}, status=400)
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except Exception:
+        return Response({"error": "Invalid reset link"}, status=400)
+
+    if not default_token_generator.check_token(user, token):
+        return Response({"error": "Token expired or invalid"}, status=400)
+
+    user.set_password(password)
+    user.save()
+
+    return Response({"message": "Password reset successful"})
 
 # VIEWSETS 
 
