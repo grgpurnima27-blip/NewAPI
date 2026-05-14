@@ -184,28 +184,36 @@ def password_reset_confirm(request):
 
 
 # PROFILE
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def profile_view(request):
-    profile, _ = Profile.objects.get_or_create(user=request.user)
-    return Response(ProfileSerializer(profile).data)
-
-
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def profile_update(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
+    print("FILES:", request.FILES)  # DEBUG
+
     image = request.FILES.get("profile_picture")
 
-    if image:
-        result = cloudinary.uploader.upload(image)
+    if not image:
+        return Response({"error": "No image uploaded"}, status=400)
+
+    try:
+        result = cloudinary.uploader.upload(
+            image,
+            folder="profile_pictures",
+            public_id=f"avatar_{request.user.id}",
+            overwrite=True,
+            resource_type="image",
+        )
+
         profile.profile_picture = result.get("public_id")
         profile.save()
 
-    return Response(ProfileSerializer(profile).data)
+    except Exception as e:
+        print("CLOUDINARY ERROR:", str(e))  # IMPORTANT
+        return Response({"error": str(e)}, status=500)
 
+    return Response(ProfileSerializer(profile).data)
 
 # VIEWSETS
 
