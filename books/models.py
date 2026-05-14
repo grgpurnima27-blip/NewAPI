@@ -14,7 +14,13 @@ class Book(models.Model):
     title = models.CharField(max_length=52)
     author = models.CharField(max_length=50)
     published_date = models.DateField()
-    isbn = models.CharField(max_length=13, unique=True, null=True, blank=True)
+
+    isbn = models.CharField(
+        max_length=13,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
     category = models.ForeignKey(
         Category,
@@ -32,11 +38,11 @@ class Profile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='profile'
+        related_name="profile"
     )
 
     profile_picture = CloudinaryField(
-        'image',
+        "image",
         blank=True,
         null=True
     )

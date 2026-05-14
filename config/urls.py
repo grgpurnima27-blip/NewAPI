@@ -20,11 +20,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework import permissions
+
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from rest_framework import permissions
 
-from books.views import verify_email, reset_password_page
+from books.views import reset_password_page
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -38,27 +40,20 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # AUTH
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # JWT (optional fallback)
+    path('api/login/', TokenObtainPairView.as_view()),
+    path('api/token/refresh/', TokenRefreshView.as_view()),
 
-    # EMAIL VERIFY
-    path('api/verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
-
-    # PASSWORD RESET (IMPORTANT: only this, no manual confirm view)
-    path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
-
-    # RESET PASSWORD HTML PAGE
-    path('reset-password/<str:token>/', reset_password_page, name='reset-password'),
-
-    # APP ROUTES
+    # APP
     path('api/', include('books.urls')),
 
+    # PASSWORD RESET PAGE
+    path('reset-password/<str:token>/', reset_password_page),
+
     # SWAGGER
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
 ]
 
-# MEDIA FILES (for profile pictures / uploads)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

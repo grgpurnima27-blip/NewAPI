@@ -1,15 +1,19 @@
 import hashlib
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.conf import settings
 
 import resend
 
 
 # RESEND CONFIG
+
 resend.api_key = settings.RESEND_API_KEY
 
+
+
+# AVATAR COLORS
 
 AVATAR_COLORS = [
     "#E74C3C",
@@ -25,10 +29,10 @@ AVATAR_COLORS = [
 ]
 
 
+
+# GENERATE AVATAR
+
 def generate_avatar(user):
-    """
-    Generate SVG avatar using user's initials.
-    """
 
     first = (
         user.first_name[0]
@@ -44,13 +48,14 @@ def generate_avatar(user):
 
     initials = f"{first}{last}" if last else first
 
-    # Generate consistent random color using email hash
     hash_int = int(
         hashlib.md5(user.email.encode()).hexdigest(),
         16
     )
 
-    color = AVATAR_COLORS[hash_int % len(AVATAR_COLORS)]
+    color = AVATAR_COLORS[
+        hash_int % len(AVATAR_COLORS)
+    ]
 
     svg = f"""
     <svg xmlns="http://www.w3.org/2000/svg"
@@ -87,24 +92,90 @@ def generate_avatar(user):
     )
 
 
-def send_reset_email(to_email, token):
-    """
-    Send password reset email using Resend.
-    """
 
-    reset_link = f"{settings.BASE_URL}/reset-password/{token}/"
+# SEND EMAIL VERIFICATION
+
+def send_verification_email(user, token):
+
+    verify_link = (
+        f"{settings.BASE_URL}"
+        f"/verify-email/{token}/"
+    )
 
     try:
+
         response = resend.Emails.send({
+
             "from": settings.DEFAULT_FROM_EMAIL,
+
+            "to": [user.email],
+
+            "subject": "Verify Your Email",
+
+            "html": f"""
+                <h2>Email Verification</h2>
+
+                <p>
+                    Click below to verify your account:
+                </p>
+
+                <br>
+
+                <a href="{verify_link}"
+                   style="
+                        padding:10px 15px;
+                        background:#16A34A;
+                        color:white;
+                        text-decoration:none;
+                        border-radius:5px;
+                   ">
+                   Verify Email
+                </a>
+
+                <br><br>
+
+                <p>
+                    If you did not create this account,
+                    ignore this email.
+                </p>
+            """
+        })
+
+        print("✅ VERIFICATION EMAIL SENT:", response)
+
+    except Exception as e:
+
+        print("❌ VERIFICATION EMAIL ERROR:", str(e))
+
+
+
+# SEND PASSWORD RESET EMAIL
+
+def send_reset_email(to_email, token):
+
+    reset_link = (
+        f"{settings.BASE_URL}"
+        f"/reset-password/{token}/"
+    )
+
+    try:
+
+        response = resend.Emails.send({
+
+            "from": settings.DEFAULT_FROM_EMAIL,
+
             "to": [to_email],
+
             "subject": "Password Reset Request",
+
             "html": f"""
                 <h2>Password Reset</h2>
 
                 <p>
-                    Click the button below to reset your password:
+                    Click below to reset your password:
                 </p>
+
+                <br>
 
                 <a href="{reset_link}"
                    style="
@@ -117,14 +188,17 @@ def send_reset_email(to_email, token):
                    Reset Password
                 </a>
 
+                <br><br>
+
                 <p>
-                    If you did not request this,
-                    please ignore this email.
+                    If you didn't request this,
+                    ignore this email.
                 </p>
             """
         })
 
-        print("EMAIL SENT:", response)
+        print("🔥 PASSWORD RESET EMAIL SENT:", response)
 
     except Exception as e:
-        print("EMAIL ERROR:", str(e))
+
+        print("❌ PASSWORD RESET EMAIL ERROR:", str(e))
