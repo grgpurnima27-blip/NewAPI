@@ -63,6 +63,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 # REGISTER 
 
+@swagger_auto_schema(
+    method='post',
+    request_body=RegisterSerializer,
+    responses={
+        201: openapi.Response(
+            description="User registered successfully. Verification email sent."
+        )
+    }
+)
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -93,7 +103,7 @@ def register_view(request):
         """
     )
 
-    return Response({"message": "Check email for verification"}, status=201)
+    return Response({"message": "Registration successful. Check email for verification"}, status=201)
 
 
 # VERIFY EMAIL 
@@ -108,7 +118,7 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Email verified successfully"})
+            return Response({"message": "Email verified successfully. You can login."})
 
         return Response({"error": "Invalid token"}, status=400)
 
@@ -116,18 +126,41 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid link"}, status=400)
 
 
-# LOGOUT 
 
+# LOGOUT
+
+@swagger_auto_schema(
+    method='post',
+    request_body=LogoutSerializer,
+    responses={
+        200: openapi.Response(description="Logged out successfully")
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
+
+    serializer = LogoutSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
     try:
-        refresh = request.data.get("refresh")
+        refresh = serializer.validated_data["refresh"]
+
         token = RefreshToken(refresh)
         token.blacklist()
-        return Response({"message": "Logged out"})
-    except:
-        return Response({"error": "Invalid token"}, status=400)
+
+        return Response(
+            {"message": "Logged out successfully"},
+            status=200
+        )
+
+    except Exception:
+        return Response(
+            {"error": "Invalid token"},
+            status=400
+        )
 
 
 # RESET PAGE 

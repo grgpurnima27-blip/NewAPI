@@ -6,8 +6,7 @@ from django.contrib.auth.models import User
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
-    email    = serializers.EmailField(required=True)  # fixed: must be required for email verification
-
+    email    = serializers.EmailField(required=True)  
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True)
