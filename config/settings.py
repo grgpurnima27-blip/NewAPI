@@ -155,7 +155,7 @@ SWAGGER_SETTINGS = {
 
 # EMAIL (RESEND SAFE) 
 # prevents silent crashes from bad email configs
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
