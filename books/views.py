@@ -65,7 +65,7 @@ def register_view(request):
             username=username,
             email=email,
             password=password,
-            is_active=False
+            is_active=True
         )
 
         Profile.objects.get_or_create(user=user)
