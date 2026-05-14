@@ -29,8 +29,7 @@ urlpatterns = [
     path("verify-email/<uidb64>/<token>/", verify_email),
 
     # RESET PAGE (renders the reset form)
-    path("reset-password/<uidb64>/<token>/", reset_password_page),
-
+    path("reset-password/<str:token>/", reset_password_page),
     # PROFILE
     path("profile/", profile_view),
     path("profile/update/",                  profile_update),

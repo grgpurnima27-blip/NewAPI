@@ -83,7 +83,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     try:
-        reset_link =reset_link = f"{settings.BASE_URL}/api/reset-password/{reset_password_token.key}/"
+        reset_link = f"{settings.BASE_URL}/api/reset-password/{reset_password_token.key}/"
 
         resend.Emails.send({
             "from":    settings.DEFAULT_FROM_EMAIL,

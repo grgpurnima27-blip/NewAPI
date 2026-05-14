@@ -34,7 +34,6 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    # Makes sure drf_yasg scans ALL urls including django_rest_passwordreset
     patterns=[
         path("api/", include("books.urls")),
         path("api/password-reset/", include("django_rest_passwordreset.urls", namespace="password_reset")),
