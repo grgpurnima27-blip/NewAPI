@@ -8,18 +8,29 @@ from .views import (
     login_view,
     logout_view,
     verify_email,
+    reset_password_page,
+    password_reset_docs,
 )
 
 router = DefaultRouter()
 router.register(r'books', BookViewSet)
 router.register(r'categories', CategoryViewSet)
 
+
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 
-    path('register/', register_view),
-    path('login/', login_view),
-    path('logout/', logout_view),
+    # AUTH
+    path("register/", register_view),
+    path("login/", login_view),
+    path("logout/", logout_view),
 
-    path('verify-email/<uidb64>/<token>/', verify_email),
+    # EMAIL VERIFY
+    path("verify-email/<uidb64>/<token>/", verify_email),
+
+    # PASSWORD RESET (Swagger visible)
+    path("password-reset-docs/", password_reset_docs),
+
+    # RESET PAGE
+    path("reset-password/<str:token>/", reset_password_page),
 ]

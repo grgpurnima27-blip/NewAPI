@@ -25,9 +25,6 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 
-from books.views import reset_password_page
-
-
 schema_view = get_schema_view(
     openapi.Info(
         title="Book API",
@@ -40,15 +37,12 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # JWT (optional fallback)
+    # JWT
     path('api/login/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
 
     # APP
     path('api/', include('books.urls')),
-
-    # PASSWORD RESET PAGE
-    path('reset-password/<str:token>/', reset_password_page),
 
     # SWAGGER
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
