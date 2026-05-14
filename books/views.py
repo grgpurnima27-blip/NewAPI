@@ -7,46 +7,52 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
-
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer
-from .utils import send_verification_email
 
 
 # REGISTER
 
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["username", "email", "password"],
+        properties={
+            "username": openapi.Schema(type=openapi.TYPE_STRING),
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
 
-    username = request.data.get("username")
-    email = request.data.get("email")
-    password = request.data.get("password")
-
-    if not username or not email or not password:
-        return Response({"error": "All fields required"}, status=400)
-
     user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
+        username=request.data["username"],
+        email=request.data["email"],
+        password=request.data["password"],
         is_active=False
     )
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
-    send_verification_email(user, uid, token)
+    link = f"http://127.0.0.1:8000/api/verify-email/{uid}/{token}/"
 
-    return Response({"message": "Check email to verify account"}, status=201)
+    print("VERIFY EMAIL LINK:", link)
+
+    return Response({"message": "User created. Check email."}, status=201)
 
 
 # VERIFY EMAIL
@@ -62,7 +68,7 @@ def verify_email(request, uidb64, token):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Email verified successfully"})
+            return Response({"message": "Email verified"})
 
         return Response({"error": "Invalid token"}, status=400)
 
@@ -71,16 +77,16 @@ def verify_email(request, uidb64, token):
 
 
 
-# LOGIN (BLOCK INACTIVE USERS)
+# LOGIN
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request):
 
-    username = request.data.get("username")
-    password = request.data.get("password")
-
-    user = authenticate(username=username, password=password)
+    user = authenticate(
+        username=request.data.get("username"),
+        password=request.data.get("password")
+    )
 
     if not user:
         return Response({"error": "Invalid credentials"}, status=400)
@@ -104,7 +110,7 @@ def logout_view(request):
     return Response({"message": "Logged out"})
 
 
-# RESET PASSWORD
+# PASSWORD RESET (SWAGGER VISIBLE)
 
 @swagger_auto_schema(
     method="post",
@@ -114,23 +120,44 @@ def logout_view(request):
         properties={
             "email": openapi.Schema(type=openapi.TYPE_STRING)
         },
-    ),
-    responses={200: "Password reset email sent"}
+    )
 )
 @api_view(["POST"])
 @permission_classes([AllowAny])
-def password_reset_docs(request):
-    return Response({"message": "Password reset handled by backend"})
+def password_reset(request):
+
+    email = request.data.get("email")
+
+    try:
+        user = User.objects.get(email=email)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_link = f"http://127.0.0.1:8000/reset-password/{uid}/{token}/"
+
+        print("RESET LINK:", reset_link)
+
+        return Response({"message": "Reset link generated"})
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
 
 
-def reset_password_page(request, token):
-    return render(request, "reset_password.html", {"token": token})
+# RESET PASSWORD PAGE
+
+def reset_password_page(request, uidb64, token):
+    return render(request, "reset_password.html", {
+        "uidb64": uidb64,
+        "token": token
+    })
+
 
 
 # VIEWSETS
 
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all().order_by("-created_at")
+    queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
