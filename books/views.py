@@ -474,6 +474,7 @@ def reset_password_page(request, uidb64, token):
         },
     )
 )
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_confirm(request):
@@ -482,16 +483,19 @@ def password_reset_confirm(request):
     token = request.data.get("token")
     password = request.data.get("password")
 
+    if not password:
+        return Response({"error": "Password required"}, status=400)
+
     uid = force_str(urlsafe_base64_decode(uidb64))
     user = User.objects.get(pk=uid)
 
     if not default_token_generator.check_token(user, token):
-        return Response({"error": "Token expired"}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
     user.set_password(password)
     user.save()
 
-    return Response({"message": "Password reset success"})
+    return Response({"message": "Password reset successful"})
 
 
 # PROFILE
