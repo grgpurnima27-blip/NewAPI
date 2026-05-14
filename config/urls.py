@@ -30,9 +30,15 @@ schema_view = get_schema_view(
     openapi.Info(
         title="API",
         default_version="v1",
+        description="API with auth, books, and password reset",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    # Makes sure drf_yasg scans ALL urls including django_rest_passwordreset
+    patterns=[
+        path("api/", include("books.urls")),
+        path("api/password-reset/", include("django_rest_passwordreset.urls", namespace="password_reset")),
+    ],
 )
 
 urlpatterns = [
@@ -41,6 +47,9 @@ urlpatterns = [
     # JWT
     path("api/login/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
+
+    # PASSWORD RESET (django_rest_passwordreset handles full flow)
+    path("api/password-reset/", include("django_rest_passwordreset.urls", namespace="password_reset")),
 
     # APP
     path("api/", include("books.urls")),

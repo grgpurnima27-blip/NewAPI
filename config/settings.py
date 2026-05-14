@@ -10,7 +10,6 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-
 # CORE
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -22,7 +21,6 @@ ALLOWED_HOSTS = [
     'localhost',
     '.onrender.com',
 ]
-
 
 
 # APPS
@@ -48,7 +46,6 @@ INSTALLED_APPS = [
 ]
 
 
-
 # MIDDLEWARE
 
 MIDDLEWARE = [
@@ -66,7 +63,6 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'config.urls'
-
 
 
 # TEMPLATES
@@ -90,17 +86,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+# DATABASE
 
-# DATABASE (FIXED)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    print("❌ DATABASE_URL is missing!")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # STATIC FILES
@@ -108,7 +113,6 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 
 
 # MEDIA (CLOUDINARY)
@@ -122,7 +126,6 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-
 # REST FRAMEWORK
 
 REST_FRAMEWORK = {
@@ -133,7 +136,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
-
 
 
 # SWAGGER
@@ -150,12 +152,7 @@ SWAGGER_SETTINGS = {
 }
 
 
-
 # EMAIL (RESEND)
-
-# EMAIL (RESEND SAFE) 
-# prevents silent crashes from bad email configs
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
@@ -164,30 +161,16 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "onboarding@resend.dev"
 )
 
-import os
-import dj_database_url
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# BASE URL (used for building reset/verify links)
 
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-else:
-    print("❌ DATABASE_URL is missing!")
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+BASE_URL = os.environ.get("BASE_URL", "https://newapi-jgbv.onrender.com")
 
 
 # PASSWORD RESET
 
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
-
 
 
 # SECURITY / CORS
