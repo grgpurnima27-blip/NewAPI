@@ -1,8 +1,12 @@
+# config/settings.py
+
 from pathlib import Path
 import os
+
 from dotenv import load_dotenv
 import dj_database_url
 import cloudinary
+
 
 load_dotenv()
 
@@ -11,79 +15,98 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # CORE
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = os.environ.get(
+    "DEBUG",
+    "False"
+).lower() == "true"
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    '.onrender.com',
-    '*'
+    "127.0.0.1",
+    "localhost",
+    ".onrender.com",
 ]
 
 
-# APPS
+# INSTALLED APPS
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
 
-    'cloudinary',
-    'cloudinary_storage',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 
-    'rest_framework',
-    'corsheaders',
-    'drf_yasg',
-    'rest_framework_simplejwt.token_blacklist',
+    "cloudinary",
+    "cloudinary_storage",
 
-    'books.apps.BooksConfig',
+    "rest_framework",
+    "corsheaders",
+    "drf_yasg",
+    "rest_framework_simplejwt.token_blacklist",
+
+    "books.apps.BooksConfig",
 ]
 
 
 # MIDDLEWARE
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
 
-    'corsheaders.middleware.CorsMiddleware',  
+    "django.middleware.security.SecurityMiddleware",
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
 
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+
+    "django.middleware.common.CommonMiddleware",
+
+    "django.middleware.csrf.CsrfViewMiddleware",
+
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "django.contrib.messages.middleware.MessageMiddleware",
+
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+
+ROOT_URLCONF = "config.urls"
 
 
 # TEMPLATES
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND":
+        "django.template.backends.django.DjangoTemplates",
+
+        "DIRS": [
+            BASE_DIR / "templates"
+        ],
+
+        "APP_DIRS": True,
+
+        "OPTIONS": {
+            "context_processors": [
+
+                "django.template.context_processors.request",
+
+                "django.contrib.auth.context_processors.auth",
+
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # DATABASE
@@ -91,6 +114,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -98,8 +122,9 @@ if DATABASE_URL:
             ssl_require=True,
         )
     }
+
 else:
-    print(" DATABASE_URL is missing!")
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -108,66 +133,64 @@ else:
     }
 
 
+
 # STATIC FILES
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
 
 
-# CLOUDINARY — explicit config so credentials are always applied
 
-CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
-CLOUDINARY_API_KEY    = os.environ.get('CLOUDINARY_API_KEY')
-CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
+# MEDIA FILES
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+
+# CLOUDINARY
+
+CLOUDINARY_CLOUD_NAME = os.environ.get(
+    "CLOUDINARY_CLOUD_NAME"
+)
+
+CLOUDINARY_API_KEY = os.environ.get(
+    "CLOUDINARY_API_KEY"
+)
+
+CLOUDINARY_API_SECRET = os.environ.get(
+    "CLOUDINARY_API_SECRET"
+)
 
 cloudinary.config(
-    cloud_name = CLOUDINARY_CLOUD_NAME,
-    api_key    = CLOUDINARY_API_KEY,
-    api_secret = CLOUDINARY_API_SECRET,
-    secure     = True,
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True,
 )
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
-    'API_KEY':    CLOUDINARY_API_KEY,
-    'API_SECRET': CLOUDINARY_API_SECRET,
+    "CLOUD_NAME": CLOUDINARY_CLOUD_NAME,
+    "API_KEY": CLOUDINARY_API_KEY,
+    "API_SECRET": CLOUDINARY_API_SECRET,
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
-
-# REST FRAMEWORK
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5
-}
+DEFAULT_FILE_STORAGE = (
+    "cloudinary_storage.storage.MediaCloudinaryStorage"
+)
 
 
-# SWAGGER
 
-SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-        }
-    },
-}
+# RESEND
 
-
-# EMAIL (RESEND)
-
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+RESEND_API_KEY = os.environ.get(
+    "RESEND_API_KEY"
+)
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
@@ -177,22 +200,56 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 
 # BASE URL
 
-BASE_URL = os.environ.get("BASE_URL", "https://newapi-jgbv.onrender.com")
+BASE_URL = os.environ.get(
+    "BASE_URL",
+    "https://newapi-jgbv.onrender.com"
+)
 
 
-# PASSWORD RESET
+# REST FRAMEWORK
 
-DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
-# PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
+REST_FRAMEWORK = {
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+
+    "DEFAULT_PAGINATION_CLASS":
+    "rest_framework.pagination.PageNumberPagination",
+
+    "PAGE_SIZE": 5,
+}
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# SWAGGER
 
-# SECURITY / CORS
+SWAGGER_SETTINGS = {
+
+    "USE_SESSION_AUTH": False,
+
+    "SECURITY_DEFINITIONS": {
+
+        "Bearer": {
+
+            "type": "apiKey",
+
+            "name": "Authorization",
+
+            "in": "header",
+        }
+    },
+}
+
+
+# CORS
 
 CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ALLOW_CREDENTIALS = True
 
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
