@@ -1,5 +1,4 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
 
 from .views import (
     register_view,
@@ -9,18 +8,23 @@ from .views import (
     forgot_password,
     reset_password_page,
     password_reset_confirm,
+    profile_view,
     profile_update,
     BookViewSet,
     CategoryViewSet,
 )
 
+from rest_framework.routers import DefaultRouter
+
+
 router = DefaultRouter()
+
 router.register(r'books', BookViewSet)
 router.register(r'categories', CategoryViewSet)
 
+
 urlpatterns = [
 
-    # BOOKS + CATEGORIES
     path("", include(router.urls)),
 
     # AUTH
@@ -28,7 +32,7 @@ urlpatterns = [
     path("login/", login_view),
     path("logout/", logout_view),
 
-    # EMAIL VERIFICATION
+    # EMAIL VERIFY
     path(
         "verify-email/<uidb64>/<token>/",
         verify_email
@@ -43,10 +47,11 @@ urlpatterns = [
     ),
 
     path(
-        "password-reset-confirm/",
+        "password-reset/confirm/",
         password_reset_confirm
     ),
 
     # PROFILE
+    path("profile/", profile_view),
     path("profile/update/", profile_update),
 ]
