@@ -291,7 +291,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -308,12 +308,11 @@ from .models import Book, Category, Profile
 from .serializers import BookSerializer, CategorySerializer, ProfileSerializer
 
 logger = logging.getLogger(__name__)
-
 resend.api_key = settings.RESEND_API_KEY
 
 
+# REGISTER
 
-# REGISTER + EMAIL VERIFY
 @swagger_auto_schema(
     method="post",
     request_body=openapi.Schema(
@@ -338,10 +337,7 @@ def register_view(request):
         return Response({"error": "All fields required"}, status=400)
 
     if User.objects.filter(username=username).exists():
-        return Response({"error": "Username already exists"}, status=400)
-
-    if User.objects.filter(email=email).exists():
-        return Response({"error": "Email already exists"}, status=400)
+        return Response({"error": "Username exists"}, status=400)
 
     user = User.objects.create_user(
         username=username,
@@ -350,13 +346,12 @@ def register_view(request):
         is_active=False
     )
 
-    Profile.objects.get_or_create(user=user)
-
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
     verify_link = f"{settings.BASE_URL}/api/verify-email/{uid}/{token}/"
 
+    # DO NOT BREAK API IF EMAIL FAILS
     try:
         resend.Emails.send({
             "from": settings.DEFAULT_FROM_EMAIL,
@@ -365,22 +360,20 @@ def register_view(request):
             "html": f"<a href='{verify_link}'>Verify Account</a>"
         })
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f"Email error: {str(e)}")
 
-    return Response({"message": "Check email to verify account"}, status=201)
+    return Response({"message": "User created. Check email."}, status=201)
 
 
 
 # VERIFY EMAIL
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def verify_email(request, uidb64, token):
 
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except:
-        return Response({"error": "Invalid link"}, status=400)
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = User.objects.get(pk=uid)
 
     if not default_token_generator.check_token(user, token):
         return Response({"error": "Invalid token"}, status=400)
@@ -391,32 +384,34 @@ def verify_email(request, uidb64, token):
     return Response({"message": "Email verified"})
 
 
-
 # LOGIN
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request):
 
-    user = authenticate(
-        username=request.data.get("username"),
-        password=request.data.get("password")
-    )
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    user = authenticate(username=username, password=password)
 
     if not user:
         return Response({"error": "Invalid credentials"}, status=400)
 
     if not user.is_active:
-        return Response({"error": "Email not verified"}, status=403)
+        return Response({"error": "Verify email first"}, status=403)
 
     refresh = RefreshToken.for_user(user)
 
     return Response({
-        "refresh": str(refresh),
-        "access": str(refresh.access_token)
+        "access": str(refresh.access_token),
+        "refresh": str(refresh)
     })
 
 
-# FORGOT PASSWORD (EMAIL ONLY)
+
+# FORGOT PASSWORD
+
 @swagger_auto_schema(
     method="post",
     request_body=openapi.Schema(
@@ -433,10 +428,10 @@ def forgot_password(request):
 
     email = request.data.get("email")
 
-    try:
-        user = User.objects.get(email=email)
-    except:
-        return Response({"message": "If email exists, reset link sent"})
+    user = User.objects.filter(email=email).first()
+
+    if not user:
+        return Response({"error": "User not found"}, status=404)
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
@@ -456,7 +451,8 @@ def forgot_password(request):
     return Response({"message": "Reset email sent"})
 
 
-# RESET HTML PAGE
+# RESET PAGE (HTML)
+
 def reset_password_page(request, uidb64, token):
     return render(request, "reset_password.html", {
         "uidb64": uidb64,
@@ -464,7 +460,20 @@ def reset_password_page(request, uidb64, token):
     })
 
 
-# RESET CONFIRM (NO SWAGGER INPUT SHOWN)
+# RESET CONFIRM
+
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["uidb64", "token", "password"],
+        properties={
+            "uidb64": openapi.Schema(type=openapi.TYPE_STRING),
+            "token": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_confirm(request):
@@ -473,14 +482,8 @@ def password_reset_confirm(request):
     token = request.data.get("token")
     password = request.data.get("password")
 
-    if not password:
-        return Response({"error": "Password required"}, status=400)
-
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except:
-        return Response({"error": "Invalid link"}, status=400)
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = User.objects.get(pk=uid)
 
     if not default_token_generator.check_token(user, token):
         return Response({"error": "Token expired"}, status=400)
@@ -488,10 +491,11 @@ def password_reset_confirm(request):
     user.set_password(password)
     user.save()
 
-    return Response({"message": "Password reset successful"})
+    return Response({"message": "Password reset success"})
 
 
 # PROFILE
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
@@ -506,6 +510,7 @@ def profile_update(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
     image = request.FILES.get("profile_picture")
+
     if image:
         profile.profile_picture = image
         profile.save()
@@ -514,6 +519,7 @@ def profile_update(request):
 
 
 # VIEWSETS
+
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by("-created_at")
     serializer_class = BookSerializer
