@@ -297,18 +297,32 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import viewsets
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 import resend
 import logging
 
 from .models import Book, Category, Profile
 from .serializers import BookSerializer, CategorySerializer, ProfileSerializer
 
-
 logger = logging.getLogger(__name__)
 resend.api_key = settings.RESEND_API_KEY
 
 
 # REGISTER + EMAIL VERIFY
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["username", "email", "password"],
+        properties={
+            "username": openapi.Schema(type=openapi.TYPE_STRING),
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -373,7 +387,6 @@ def verify_email(request, uidb64, token):
     return Response({"message": "Email verified successfully"})
 
 
-
 # LOGIN
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -398,19 +411,24 @@ def login_view(request):
     })
 
 
-# LOGOUT (FIXED)
+# LOGOUT
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    """
-    Simple logout for JWT:
-    Client should delete token.
-    (Optional: implement blacklist later)
-    """
     return Response({"message": "Logged out successfully"})
 
 
-# FORGOT PASSWORD
+# FORGOT PASSWORD (EMAIL ONLY)
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["email"],
+        properties={
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def forgot_password(request):
@@ -448,6 +466,16 @@ def reset_password_page(request, uidb64, token):
 
 
 # RESET CONFIRM
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["password"],
+        properties={
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_confirm(request):
