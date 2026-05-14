@@ -7,7 +7,6 @@ from .views import (
     reset_password_page,
     password_reset_confirm,
     forgot_password,
-    profile_view,
     profile_update,
     BookViewSet,
     CategoryViewSet,
@@ -30,12 +29,11 @@ urlpatterns = [
     # EMAIL VERIFY
     path("verify-email/<uidb64>/<token>/", verify_email),
 
-    # PASSWORD RESET FLOW
+    # PASSWORD RESET
     path("forgot-password/", forgot_password),
     path("reset-password/<uidb64>/<token>/", reset_password_page),
     path("password-reset/confirm/", password_reset_confirm),
 
     # PROFILE
-    path("profile/", profile_view),
     path("profile/update/", profile_update),
 ]
