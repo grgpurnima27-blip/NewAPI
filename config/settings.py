@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'rest_framework_simplejwt.token_blacklist',
-    'django_rest_passwordreset',
 
     'books.apps.BooksConfig',
 ]
@@ -181,6 +180,9 @@ BASE_URL = os.environ.get("BASE_URL", "https://newapi-jgbv.onrender.com")
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
 PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # SECURITY / CORS
 

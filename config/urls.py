@@ -16,8 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -30,14 +28,10 @@ schema_view = get_schema_view(
     openapi.Info(
         title="API",
         default_version="v1",
-        description="API with auth, books, and password reset",
+        description="API with auth, books, and reset system",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[
-        path("api/", include("books.urls")),
-        path("api/password-reset/", include("django_rest_passwordreset.urls", namespace="password_reset")),
-    ],
 )
 
 urlpatterns = [
@@ -47,15 +41,9 @@ urlpatterns = [
     path("api/login/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
 
-    # PASSWORD RESET (django_rest_passwordreset handles full flow)
-    path("api/password-reset/", include("django_rest_passwordreset.urls", namespace="password_reset")),
-
     # APP
     path("api/", include("books.urls")),
 
     # SWAGGER
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0)),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
