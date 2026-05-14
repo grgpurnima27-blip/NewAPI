@@ -1,57 +1,29 @@
 from django.urls import path, include
-
-from .views import (
-    register_view,
-    login_view,
-    logout_view,
-    verify_email,
-    forgot_password,
-    reset_password_page,
-    password_reset_confirm,
-    profile_view,
-    profile_update,
-    BookViewSet,
-    CategoryViewSet,
-)
-
+from . import views
 from rest_framework.routers import DefaultRouter
 
-
 router = DefaultRouter()
-
-router.register(r'books', BookViewSet)
-router.register(r'categories', CategoryViewSet)
-
+router.register(r'books', views.BookViewSet)
+router.register(r'categories', views.CategoryViewSet)
 
 urlpatterns = [
 
     path("", include(router.urls)),
 
     # AUTH
-    path("register/", register_view),
-    path("login/", login_view),
-    path("logout/", logout_view),
+    path("register/", views.register_view),
+    path("login/", views.login_view),
+    path("logout/", views.logout_view),
 
     # EMAIL VERIFY
-    path(
-        "verify-email/<uidb64>/<token>/",
-        verify_email
-    ),
+    path("verify-email/<uidb64>/<token>/", views.verify_email),
 
     # PASSWORD RESET
-    path("forgot-password/", forgot_password),
-
-    path(
-        "reset-password/<uidb64>/<token>/",
-        reset_password_page
-    ),
-
-    path(
-        "password-reset/confirm/",
-        password_reset_confirm
-    ),
+    path("forgot-password/", views.forgot_password),
+    path("reset-password/<uidb64>/<token>/", views.reset_password_page),
+    path("password-reset/confirm/", views.password_reset_confirm),
 
     # PROFILE
-    path("profile/", profile_view),
-    path("profile/update/", profile_update),
+    path("profile/", views.profile_view),
+    path("profile/update/", views.profile_update),
 ]

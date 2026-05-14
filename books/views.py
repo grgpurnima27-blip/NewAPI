@@ -300,11 +300,9 @@ from rest_framework import viewsets
 import resend
 import logging
 
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-
 from .models import Book, Category, Profile
 from .serializers import BookSerializer, CategorySerializer, ProfileSerializer
+
 
 logger = logging.getLogger(__name__)
 resend.api_key = settings.RESEND_API_KEY
@@ -347,10 +345,10 @@ def register_view(request):
             "from": settings.DEFAULT_FROM_EMAIL,
             "to": [email],
             "subject": "Verify Email",
-            "html": f"<h3>Verify your account</h3><a href='{verify_link}'>Click here</a>"
+            "html": f"<a href='{verify_link}'>Verify Account</a>"
         })
     except Exception as e:
-        logger.error(f"Email error: {str(e)}")
+        logger.error(str(e))
 
     return Response({"message": "User created. Check email."}, status=201)
 
@@ -367,7 +365,7 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid link"}, status=400)
 
     if not default_token_generator.check_token(user, token):
-        return Response({"error": "Invalid or expired token"}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
     user.is_active = True
     user.save()
@@ -395,19 +393,31 @@ def login_view(request):
     refresh = RefreshToken.for_user(user)
 
     return Response({
-        "refresh": str(refresh),
-        "access": str(refresh.access_token)
+        "access": str(refresh.access_token),
+        "refresh": str(refresh)
     })
 
 
-# FORGOT PASSWORD (EMAIL ONLY)
+# LOGOUT (FIXED)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    """
+    Simple logout for JWT:
+    Client should delete token.
+    (Optional: implement blacklist later)
+    """
+    return Response({"message": "Logged out successfully"})
+
+
+# FORGOT PASSWORD
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def forgot_password(request):
 
     email = request.data.get("email")
-    user = User.objects.filter(email=email).first()
 
+    user = User.objects.filter(email=email).first()
     if not user:
         return Response({"error": "User not found"}, status=404)
 
@@ -421,7 +431,7 @@ def forgot_password(request):
             "from": settings.DEFAULT_FROM_EMAIL,
             "to": [email],
             "subject": "Reset Password",
-            "html": f"<h3>Reset Password</h3><a href='{reset_link}'>Click here</a>"
+            "html": f"<a href='{reset_link}'>Reset Password</a>"
         })
     except Exception as e:
         logger.error(str(e))
@@ -437,8 +447,7 @@ def reset_password_page(request, uidb64, token):
     })
 
 
-
-# RESET CONFIRM (SAFE)
+# RESET CONFIRM
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_confirm(request):
@@ -477,6 +486,7 @@ def profile_view(request):
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def profile_update(request):
+
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
     image = request.FILES.get("profile_picture")
