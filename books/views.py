@@ -92,7 +92,7 @@ def register_view(request):
 
     return Response({
         "message": "User registered. Please check your email to verify account.",
-        "verify_link_for_testing": verify_link  # remove in production
+        # "verify_link_for_testing": verify_link  # remove in production
     }, status=201)
 
 
@@ -205,6 +205,18 @@ def reset_password_page(request, uidb64, token):
 
 
 # RESET CONFIRM
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["uidb64", "token", "password"],
+        properties={
+            "uidb64": openapi.Schema(type=openapi.TYPE_STRING),
+            "token": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -213,6 +225,8 @@ def password_reset_confirm(request):
     uidb64 = request.data.get("uidb64")
     token = request.data.get("token")
     password = request.data.get("password")
+    if not uidb64 or not token or not password:
+        return Response({"error": "All fields required"}, status=400)
 
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
