@@ -13,12 +13,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '.onrender.com',
+    '*'
 ]
 
 
@@ -47,9 +48,12 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',  
+
     'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,7 +61,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 ROOT_URLCONF = 'config.urls'
 
@@ -96,7 +99,7 @@ if DATABASE_URL:
         )
     }
 else:
-    print("❌ DATABASE_URL is missing!")
+    print(" DATABASE_URL is missing!")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -132,7 +135,7 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
 # REST FRAMEWORK
 
@@ -143,6 +146,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5
 }
 
 
@@ -178,7 +183,7 @@ BASE_URL = os.environ.get("BASE_URL", "https://newapi-jgbv.onrender.com")
 # PASSWORD RESET
 
 DJANGO_REST_PASSWORDRESET_NO_INFORMATION_LEAKAGE = False
-PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
+# PASSWORD_RESET_CONFIRM_URL = 'reset-password/{token}/'
 
 
 MEDIA_URL = '/media/'

@@ -7,6 +7,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -217,8 +219,6 @@ def profile_update(request):
 
 # VIEWSETS
 
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all().order_by("-created_at")
