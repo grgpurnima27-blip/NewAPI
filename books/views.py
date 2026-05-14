@@ -17,6 +17,9 @@ from rest_framework import viewsets
 import resend
 import logging
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from .models import Book, Category, Profile
 from .serializers import BookSerializer, CategorySerializer, ProfileSerializer
 
@@ -24,8 +27,20 @@ logger = logging.getLogger(__name__)
 resend.api_key = settings.RESEND_API_KEY
 
 
-# REGISTER (EMAIL VERIFY)
+# REGISTER (SWAGGER FIXED)
 
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["username", "email", "password"],
+        properties={
+            "username": openapi.Schema(type=openapi.TYPE_STRING),
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -59,13 +74,13 @@ def register_view(request):
         "to": [email],
         "subject": "Verify Your Email",
         "html": f"""
-            <h2>Verify Your Account</h2>
-            <p>Click below to activate your account:</p>
+            <h2>Verify Account</h2>
+            <p>Click below to activate:</p>
             <a href="{link}">Verify Email</a>
         """
     })
 
-    return Response({"message": "Check your email to verify account"}, status=201)
+    return Response({"message": "Check email to verify account"}, status=201)
 
 
 
@@ -81,16 +96,15 @@ def verify_email(request, uidb64, token):
         return Response({"error": "Invalid link"}, status=400)
 
     if not default_token_generator.check_token(user, token):
-        return Response({"error": "Invalid or expired token"}, status=400)
+        return Response({"error": "Invalid token"}, status=400)
 
     user.is_active = True
     user.save()
 
-    return Response({"message": "Email verified successfully"})
+    return Response({"message": "Email verified"})
 
 
-
-# LOGIN (JWT)
+# LOGIN
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -114,9 +128,8 @@ def login_view(request):
 
     return Response({
         "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "access": str(refresh.access_token)
     })
-
 
 
 # LOGOUT
@@ -124,12 +137,21 @@ def login_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    return Response({"message": "Logged out successfully"})
-
+    return Response({"message": "Logged out"})
 
 
 # FORGOT PASSWORD
 
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["email"],
+        properties={
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def forgot_password(request):
@@ -149,16 +171,13 @@ def forgot_password(request):
         "from": settings.DEFAULT_FROM_EMAIL,
         "to": [email],
         "subject": "Reset Password",
-        "html": f"""
-            <h3>Password Reset Request</h3>
-            <a href="{link}">Click to Reset Password</a>
-        """
+        "html": f"<a href='{link}'>Reset Password</a>"
     })
 
-    return Response({"message": "Password reset email sent"})
+    return Response({"message": "Reset email sent"})
 
 
-# RESET PASSWORD PAGE 
+# RESET PASSWORD PAGE
 
 def reset_password_page(request, uidb64, token):
     return render(request, "reset_password.html", {
@@ -167,8 +186,20 @@ def reset_password_page(request, uidb64, token):
     })
 
 
-# RESET PASSWORD CONFIRM
+# RESET CONFIRM 
 
+@swagger_auto_schema(
+    method="post",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["uidb64", "token", "password"],
+        properties={
+            "uidb64": openapi.Schema(type=openapi.TYPE_STRING),
+            "token": openapi.Schema(type=openapi.TYPE_STRING),
+            "password": openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    )
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def password_reset_confirm(request):
@@ -186,7 +217,7 @@ def password_reset_confirm(request):
         return Response({"error": "Invalid link"}, status=400)
 
     if not default_token_generator.check_token(user, token):
-        return Response({"error": "Token expired or invalid"}, status=400)
+        return Response({"error": "Token expired"}, status=400)
 
     user.set_password(password)
     user.save()
@@ -207,7 +238,6 @@ def profile_update(request):
     if not image:
         return Response({"error": "No image uploaded"}, status=400)
 
-    # IMPORTANT: CloudinaryField handles upload automatically
     profile.profile_picture = image
     profile.save()
 
