@@ -38,24 +38,31 @@ from .serializers import BookSerializer, CategorySerializer
 @permission_classes([AllowAny])
 def register_view(request):
 
+    username = request.data.get("username")
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if not username or not email or not password:
+        return Response({"error": "All fields required"}, status=400)
+
     user = User.objects.create_user(
-        username=request.data["username"],
-        email=request.data["email"],
-        password=request.data["password"],
+        username=username,
+        email=email,
+        password=password,
         is_active=False
     )
 
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
-    link = f"http://127.0.0.1:8000/api/verify-email/{uid}/{token}/"
+    link = f"https://newapi-jgbv.onrender.com/api/verify-email/{uid}/{token}/"
+    print("VERIFY EMAIL:", link)
 
-    print("VERIFY EMAIL LINK:", link)
-
-    return Response({"message": "User created. Check email."}, status=201)
+    return Response({"message": "User created. Verify email."}, status=201)
 
 
 # VERIFY EMAIL
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -77,7 +84,8 @@ def verify_email(request, uidb64, token):
 
 
 
-# LOGIN
+# LOGIN (BLOCK UNVERIFIED USERS)
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -102,6 +110,7 @@ def login_view(request):
     })
 
 
+
 # LOGOUT
 
 @api_view(["POST"])
@@ -110,7 +119,8 @@ def logout_view(request):
     return Response({"message": "Logged out"})
 
 
-# PASSWORD RESET (SWAGGER VISIBLE)
+# PASSWORD RESET (FIXED 500 ERROR)
+
 
 @swagger_auto_schema(
     method="post",
@@ -118,7 +128,7 @@ def logout_view(request):
         type=openapi.TYPE_OBJECT,
         required=["email"],
         properties={
-            "email": openapi.Schema(type=openapi.TYPE_STRING)
+            "email": openapi.Schema(type=openapi.TYPE_STRING),
         },
     )
 )
@@ -128,13 +138,16 @@ def password_reset(request):
 
     email = request.data.get("email")
 
+    if not email:
+        return Response({"error": "Email required"}, status=400)
+
     try:
         user = User.objects.get(email=email)
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        reset_link = f"http://127.0.0.1:8000/reset-password/{uid}/{token}/"
+        reset_link = f"https://newapi-jgbv.onrender.com/reset-password/{uid}/{token}/"
 
         print("RESET LINK:", reset_link)
 
@@ -142,6 +155,7 @@ def password_reset(request):
 
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
+
 
 
 # RESET PASSWORD PAGE
@@ -153,11 +167,10 @@ def reset_password_page(request, uidb64, token):
     })
 
 
-
 # VIEWSETS
 
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all()
+    queryset = Book.objects.all().order_by("-created_at")
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
