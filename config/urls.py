@@ -23,26 +23,42 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 
+from books import views
+
 
 schema_view = get_schema_view(
     openapi.Info(
         title="API",
         default_version="v1",
-        description="API with auth, books, and reset system",
+        description="Auth + Books + Email Verification + Reset System",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
 
+
 urlpatterns = [
+    # ADMIN
     path("admin/", admin.site.urls),
 
-    # JWT
-    path("api/login/", TokenObtainPairView.as_view()),
-    path("api/token/refresh/", TokenRefreshView.as_view()),
+    # JWT AUTH
+    path("api/login/", TokenObtainPairView.as_view(), name="jwt_login"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="jwt_refresh"),
 
-    # APP
+    # AUTH (CUSTOM)
+    path("api/register/", views.register_view),
+    path("api/verify-email/<uidb64>/<token>/", views.verify_email),
+
+    path("api/forgot-password/", views.forgot_password),
+    path("api/password-reset/confirm/", views.password_reset_confirm),
+
+    # IMPORTANT: HTML RESET PAGE
+    path("reset-password/<uidb64>/<token>/", views.reset_password_page),
+
+
+    # APP ROUTES
     path("api/", include("books.urls")),
+
 
     # SWAGGER
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0)),
